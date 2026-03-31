@@ -1,0 +1,2371 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2652194,
+          5.530162499999999
+        ]
+      },
+      "properties": {
+        "name": "Dansoman Last Stop",
+        "address": "Dansoman High St, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2655380000000001,
+          5.530848499999999
+        ]
+      },
+      "properties": {
+        "name": "Ebenezer Down Taxi Station",
+        "address": "GPJM+8QP, Bamboo St, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2552879,
+          5.531812599999999
+        ]
+      },
+      "properties": {
+        "name": "Agege Bus stop",
+        "address": "Old Dansoman High St, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2103445,
+          5.5447565
+        ]
+      },
+      "properties": {
+        "name": "3D Luxury Carpet",
+        "address": "Taxi rank, Rawlings Park, Zongo Lane, Gate 1, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.3095487,
+          5.5536338
+        ]
+      },
+      "properties": {
+        "name": "Tetegu Taxi Rank",
+        "address": "Tetegu Rd"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2526163,
+          5.5511744
+        ]
+      },
+      "properties": {
+        "name": "Maame nkran taxi station",
+        "address": "HP2W+FX6, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2493435,
+          5.5505735
+        ]
+      },
+      "properties": {
+        "name": "Sukura Trotro Station",
+        "address": "Woowoti St, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2487037,
+          5.5530281
+        ]
+      },
+      "properties": {
+        "name": "ALAJI KPEDZE IHKLASS CAFE",
+        "address": "HQ32+6G9, Bomsam Abla St, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2105504,
+          5.5471748
+        ]
+      },
+      "properties": {
+        "name": "Taxi Rank",
+        "address": "GQWQ+VQ8, Kwame Nkrumah Ave, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1965372,
+          5.550809399999999
+        ]
+      },
+      "properties": {
+        "name": "Ministries Taxi Rank",
+        "address": "HR23+89G, Valco Dr, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.3034638,
+          5.556517400000001
+        ]
+      },
+      "properties": {
+        "name": "Weija-Gbawe Taxi Station",
+        "address": "Off Accra - Cape Coast Rd, Weija"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.3040372,
+          5.5565415
+        ]
+      },
+      "properties": {
+        "name": "Beckexxl Wine",
+        "address": "opposite Taxi Rank, Weija Junction opposite Tanko Kitchen W McCharthy Road - Weija Junction"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.3040831,
+          5.5558521
+        ]
+      },
+      "properties": {
+        "name": "Weija Junction Bus Stop",
+        "address": "Accra - Cape Coast Rd"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2321993,
+          5.5579328
+        ]
+      },
+      "properties": {
+        "name": "Freddiman Services",
+        "address": "Opposite Aplaku Taxi Rank, GS-585-6844, Kasoa Old Barrier, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.23632,
+          5.5650439
+        ]
+      },
+      "properties": {
+        "name": "Kaneshie Takoradi VIP Station",
+        "address": "HQ87+2FF, Ayikai St, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1974306,
+          5.559284600000001
+        ]
+      },
+      "properties": {
+        "name": "Dobro Gonno KKD Taxi rank Amasaman",
+        "address": "P.o box 14559, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1974306,
+          5.559284600000001
+        ]
+      },
+      "properties": {
+        "name": "Solid Crest Restaurant",
+        "address": "Penny near my brother taxi rank, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1727748,
+          5.55823
+        ]
+      },
+      "properties": {
+        "name": "Ako Adjei Taxi Rank",
+        "address": "HR5G+7VX, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.159004,
+          5.560041099999999
+        ]
+      },
+      "properties": {
+        "name": "Taxi Stand",
+        "address": "HR6R+2C2, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2889289,
+          5.5655699
+        ]
+      },
+      "properties": {
+        "name": "Akawe bus stop",
+        "address": "Mankessim - Accra Rd, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2859605,
+          5.5718421
+        ]
+      },
+      "properties": {
+        "name": "Mallam junction",
+        "address": "HPF8+8F2, 6 Gbawe Rd, Mallam"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2722501,
+          5.5711726
+        ]
+      },
+      "properties": {
+        "name": "ID SAROFO PLUMBING, SAKAMAM",
+        "address": "BLUE LAGOON, TAXI RANK, Hyde park, SAKAMAM"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2525893,
+          5.574369
+        ]
+      },
+      "properties": {
+        "name": "HANSONIC JUNCTION",
+        "address": "HPFW+PXV hansonic Taxi Rank, Dansoman Rd, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2159571,
+          5.5689723
+        ]
+      },
+      "properties": {
+        "name": "Circle UTC Taxi Station",
+        "address": "HQ9M+HJM, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2194335,
+          5.568455699999999
+        ]
+      },
+      "properties": {
+        "name": "Circle VIP Station",
+        "address": "Ring Road West, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2147202,
+          5.5676852
+        ]
+      },
+      "properties": {
+        "name": "IPMC College Of Technology Circle Branch",
+        "address": "HQ9P+34C, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2130986,
+          5.569738999999999
+        ]
+      },
+      "properties": {
+        "name": "Taxi Rank",
+        "address": "HQ9P+VQR, Kojo Thompson Rd, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2149817,
+          5.5688561
+        ]
+      },
+      "properties": {
+        "name": "Rigde Hospital GIJ Taxi Station, Circle",
+        "address": "HQ9P+G2R, Kwame Nkrumah Ave, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.21616,
+          5.569033999999999
+        ]
+      },
+      "properties": {
+        "name": "CUBE CARE",
+        "address": "Workers College Taxi Rank Behind Ghana commercial bank Circle"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1794237,
+          5.5737358
+        ]
+      },
+      "properties": {
+        "name": "Trotro Stop",
+        "address": "HRFC+F6W, Cantonments Rd, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2825879,
+          5.5779155
+        ]
+      },
+      "properties": {
+        "name": "Onyame Bekyere Taxi Rank",
+        "address": "HPH8+5X7, Awoshie Rd, Mallam"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2392232,
+          5.580041
+        ]
+      },
+      "properties": {
+        "name": "Bubiashie Taxi Rank",
+        "address": "HQJ6+286, Agbon Boi St, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2400217,
+          5.580591
+        ]
+      },
+      "properties": {
+        "name": "The Lunch Hour Restaurant",
+        "address": "Bubiashie, Taxi Rank, Agbon Boi St, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2401791,
+          5.5812262
+        ]
+      },
+      "properties": {
+        "name": "Perez Chapel International The Tabernacle Bubuashie",
+        "address": "HQJ5+FWW Taxi Rank, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.209233,
+          5.5827046
+        ]
+      },
+      "properties": {
+        "name": "Office Of The Nima-Maamobi Taxi Rank",
+        "address": "HQMR+38C, Senya Brekum Rd, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1975313,
+          5.5808296
+        ]
+      },
+      "properties": {
+        "name": "Masalachi Bus Stop",
+        "address": "HRJ2+8XP Tantra Hill, Yellow House Street, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1784836,
+          5.5767652
+        ]
+      },
+      "properties": {
+        "name": "Lifetime Enterprise",
+        "address": "Adj Kwesi Mintim Taxi Rank Takoradi"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1784836,
+          5.5767652
+        ]
+      },
+      "properties": {
+        "name": "J. A. Agos",
+        "address": "Market Circle opp Sekondi Taxi Rank, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1110649,
+          5.5800661
+        ]
+      },
+      "properties": {
+        "name": "Lascala Market",
+        "address": "Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1048228,
+          5.581500699999999
+        ]
+      },
+      "properties": {
+        "name": "CANVAS FRAMES | CLASSIC FRAME",
+        "address": "Malik Taxi Rank, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.104174,
+          5.5833853
+        ]
+      },
+      "properties": {
+        "name": "Teshie Mobil",
+        "address": "Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.3034881,
+          5.591940399999999
+        ]
+      },
+      "properties": {
+        "name": "Gbawe Cp Taxi Station (Last Stop)",
+        "address": "Gbawe, SDA Hospital Rd"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.3036182,
+          5.588528600000001
+        ]
+      },
+      "properties": {
+        "name": "Melanin Imperial Spa Ghana",
+        "address": "Gbawe Cp, Taxi Rank"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2998396,
+          5.587246299999999
+        ]
+      },
+      "properties": {
+        "name": "CEFEDA TRAVEL AND TOUR",
+        "address": "CP Old Taxi Rank, New Gbawe, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2988101,
+          5.586162799999999
+        ]
+      },
+      "properties": {
+        "name": "Life In The Spirit Ministry International",
+        "address": "Gbawe CP Old Taxi Rank The Bridge"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2853525,
+          5.5895962
+        ]
+      },
+      "properties": {
+        "name": "Lane 1, taxi rank, Awoshie Onyinaase",
+        "address": "HPQ7+RVJ, Awoshie"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.26852,
+          5.592202899999999
+        ]
+      },
+      "properties": {
+        "name": "A-Lang Taxi Station",
+        "address": "Kwashieman"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2182762,
+          5.5880889
+        ]
+      },
+      "properties": {
+        "name": "Alajo - Kotobabi Taxi Rank",
+        "address": "HQQJ+6MQ, Nsawam Road, Nsawam Road, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2061385,
+          5.5946468
+        ]
+      },
+      "properties": {
+        "name": "Jo Network Ltd",
+        "address": "HQVV+VG5, Ministries Taxi Rank, Opposite Original Pay All Head Office, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1811751,
+          5.5910721
+        ]
+      },
+      "properties": {
+        "name": "37 Taxi rank",
+        "address": "HRR9+CGG, Liberation Road, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1800636,
+          5.588940000000001
+        ]
+      },
+      "properties": {
+        "name": "Cab to Tema",
+        "address": "59 Giffard Rd, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1784836,
+          5.5767652
+        ]
+      },
+      "properties": {
+        "name": "Highly Exalted Co. Ltd.",
+        "address": "Opp. Achimota Taxi Rank Haatso, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1277128,
+          5.5874875
+        ]
+      },
+      "properties": {
+        "name": "Demo Taxi Rank",
+        "address": "HVPC+XWV, Unnamed Road, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1249803,
+          5.585512899999999
+        ]
+      },
+      "properties": {
+        "name": "Teshie Demo Taxi Station",
+        "address": "Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1208468,
+          5.592565899999999
+        ]
+      },
+      "properties": {
+        "name": "Camp 2 taxi station",
+        "address": "Camp 2 Taxi Station, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1253646,
+          5.586820299999999
+        ]
+      },
+      "properties": {
+        "name": "Teshie Demo",
+        "address": "HVPF+JP8, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1230231,
+          5.593349
+        ]
+      },
+      "properties": {
+        "name": "Hunny's gift makeup & Beauty Hub",
+        "address": "Teshie camp 2 taxi rank last stop"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.09845849999999999,
+          5.588122299999999
+        ]
+      },
+      "properties": {
+        "name": "OSMOSES GRAPHIX",
+        "address": "THEMIS STREET, First Jct"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.088985,
+          5.594005999999999
+        ]
+      },
+      "properties": {
+        "name": "Brigade Taxi Rank",
+        "address": "HWV6+JC2, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.0887427,
+          5.5937467
+        ]
+      },
+      "properties": {
+        "name": "Flobri trading ventures",
+        "address": "Brigade taxi rank GZ-002-2008, Nungua"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.08906870000000001,
+          5.593941099999999
+        ]
+      },
+      "properties": {
+        "name": "ENSO NYAME YE LOCKSMITH",
+        "address": "brigade taxi rank"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.0890782,
+          5.5939573
+        ]
+      },
+      "properties": {
+        "name": "P.O.K footwear",
+        "address": "brigade taxi rank nungua"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.3041119,
+          5.5986616
+        ]
+      },
+      "properties": {
+        "name": "Palas Town Taxi Rank",
+        "address": "HMXW+F96, Awoshie Ablekuma Highway, Awoshie"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2779462,
+          5.5978446
+        ]
+      },
+      "properties": {
+        "name": "EACFGhana",
+        "address": "Awoshie A-Lang, Taxi Rank"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2782182,
+          5.602637
+        ]
+      },
+      "properties": {
+        "name": "Life and Living Guest House",
+        "address": "3 Lake Pool Road Santa Maria/A.Lang Taxi Rank, Kwashieman"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2634117,
+          5.5981117
+        ]
+      },
+      "properties": {
+        "name": "Hong Kong police station taxi rank",
+        "address": "HPXP+6JW, Hong Kong Bus Stop, Nii Adaman St, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2634271,
+          5.5981142
+        ]
+      },
+      "properties": {
+        "name": "Hongkong Police station Taxi Rank",
+        "address": "Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2633846,
+          5.5978127
+        ]
+      },
+      "properties": {
+        "name": "Kwashiman Hongkong taxi rank Yellow building",
+        "address": "n 1 Nii Adaman St, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2478089,
+          5.6032253
+        ]
+      },
+      "properties": {
+        "name": "Taxi rank",
+        "address": "JQ32+7VW, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2210292,
+          5.6029007
+        ]
+      },
+      "properties": {
+        "name": "K. Zorre PropertiesLtd",
+        "address": "Abelemkpe taxi rank, Acrca"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.216704,
+          5.5956573
+        ]
+      },
+      "properties": {
+        "name": "El Shaddia Enterprise",
+        "address": "Taxi Rank, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2169007,
+          5.604507
+        ]
+      },
+      "properties": {
+        "name": "ShoeKama",
+        "address": "Taxi Rank, 45 Onyankle St, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1937282,
+          5.6018379
+        ]
+      },
+      "properties": {
+        "name": "Lucky Generation Depot",
+        "address": "JR24+PFQ, Madina Taxi Rank Old Road, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1869579,
+          5.6037379
+        ]
+      },
+      "properties": {
+        "name": "Samaska Printing Press",
+        "address": "near Nima Taxi Rank, New Town"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1869644,
+          5.6037168
+        ]
+      },
+      "properties": {
+        "name": "Kwasibu Taxi Rank",
+        "address": "JR37+F6M, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1869579,
+          5.6037379
+        ]
+      },
+      "properties": {
+        "name": "Friendly Network",
+        "address": "100 Met Off Madina Old Road Madina Taxi Rank"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1869579,
+          5.6037379
+        ]
+      },
+      "properties": {
+        "name": "Golden Groceries Enterprise",
+        "address": "Weija old barrier taxi rank"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1580924,
+          5.5967473
+        ]
+      },
+      "properties": {
+        "name": "Taxi rank",
+        "address": "HRWR+MQV, Unnamed Road, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.127015,
+          5.5974527
+        ]
+      },
+      "properties": {
+        "name": "Tebibiano Taxi Station",
+        "address": "HVXF+46M, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2757539,
+          5.6058663
+        ]
+      },
+      "properties": {
+        "name": "Santa-Maria Taxi Rank",
+        "address": "JP4F+9PF, Kwashieman"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2679262,
+          5.6117322
+        ]
+      },
+      "properties": {
+        "name": "Race course taxi rank",
+        "address": "JP9H+6VC, 108 Race Course St, Sowutoum"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2468544,
+          5.6081579
+        ]
+      },
+      "properties": {
+        "name": "Lapaz Taxi Station",
+        "address": "JQ53+776, Lapaz"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2399169,
+          5.6131185
+        ]
+      },
+      "properties": {
+        "name": "De-Lead International Travel Services",
+        "address": "Taxi Rank, Akweteyman"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2177904,
+          5.606903600000001
+        ]
+      },
+      "properties": {
+        "name": "Abelenkpe Taxi Rank",
+        "address": "JQ4J+QV8, Manhean Loop Rd, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2168217,
+          5.6057402
+        ]
+      },
+      "properties": {
+        "name": "Madlamp Soccer Academy",
+        "address": "taxi rank, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2172487,
+          5.6067145
+        ]
+      },
+      "properties": {
+        "name": "BasicNeeds-Ghana (Accra Office)",
+        "address": "Taxi Rank, 15th, Alhaji Sulley Rd, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1725446,
+          5.6080725
+        ]
+      },
+      "properties": {
+        "name": "Airport Taxi Stand",
+        "address": "JR5G+6XG, Airport Rd, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.186964,
+          5.6037003
+        ]
+      },
+      "properties": {
+        "name": "Alpha Exporters",
+        "address": "Kasoa, 6/7 Taxi Rank New Bentinor, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.130913,
+          5.6083698
+        ]
+      },
+      "properties": {
+        "name": "Golden KanRich Enterprise",
+        "address": "JV69+VW8 Penny taxi station, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1292723,
+          5.6103858
+        ]
+      },
+      "properties": {
+        "name": "Rekies cake explore",
+        "address": "Penny taxi Rank Teshie penny"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1159184,
+          5.6061686
+        ]
+      },
+      "properties": {
+        "name": "Tsui Bleoo Taxi Station",
+        "address": "JV3P+G2Q, Tsui Bleoo Rd, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1161116,
+          5.606215799999999
+        ]
+      },
+      "properties": {
+        "name": "GN Bank Tsui Bleoo",
+        "address": "JV4M+FHV to the Taxi Rank, Tsui Bleoo Rd, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1073175,
+          5.6092714
+        ]
+      },
+      "properties": {
+        "name": "Century Road Last Stop",
+        "address": "JV5V+P33, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.09415889999999999,
+          5.614643099999999
+        ]
+      },
+      "properties": {
+        "name": "Adom Arakwa Adogon",
+        "address": "JW74+V84, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2987498,
+          5.621578
+        ]
+      },
+      "properties": {
+        "name": "Fan Milk Junction Bus Stop",
+        "address": "Ghana"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.253734,
+          5.620258300000001
+        ]
+      },
+      "properties": {
+        "name": "Six to Six Taxi Station",
+        "address": "139 22nd St, Nii Okaiman East"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2500167,
+          5.618454900000001
+        ]
+      },
+      "properties": {
+        "name": "Fish Pond bus stop",
+        "address": "Lapaz"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2537843,
+          5.62013
+        ]
+      },
+      "properties": {
+        "name": "ANGIE\u2019S WIGS & COSMETICS,LAPAZ.",
+        "address": "22nd street Six to six taxi rank"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2536865,
+          5.6196034
+        ]
+      },
+      "properties": {
+        "name": "Yoyas Tavern",
+        "address": "22nd street Six to six taxi rank, Nii Okaiman East"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1828084,
+          5.6162785
+        ]
+      },
+      "properties": {
+        "name": "MICTECH",
+        "address": "Taxi rank, Kofi Annan St, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1736,
+          5.62142
+        ]
+      },
+      "properties": {
+        "name": "Shoprite Accra Mall",
+        "address": "Tetteh Quarshie Ave, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1248564,
+          5.6172539
+        ]
+      },
+      "properties": {
+        "name": "Ablazaa taxi rank",
+        "address": "JV8G+W32, Complex Avenue, Agblezaa - Manet Rd, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1140903,
+          5.618376899999999
+        ]
+      },
+      "properties": {
+        "name": "A-Z Preparatory & J.H. School",
+        "address": "Malik Taxi Rank, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1161125,
+          5.6183899
+        ]
+      },
+      "properties": {
+        "name": "Vivi\u2019s Place, Malik Taxi Rank",
+        "address": "JV9M+H5C, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1012493,
+          5.6191078
+        ]
+      },
+      "properties": {
+        "name": "Greda Taxi Rank",
+        "address": "JV9X+MG2, 10th Ave, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.0863581,
+          5.6221327
+        ]
+      },
+      "properties": {
+        "name": "Railway Taxi Station",
+        "address": "JWC7+VF2, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.075705,
+          5.6251206
+        ]
+      },
+      "properties": {
+        "name": "18 junction taxi rank",
+        "address": "Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.3097254,
+          5.627063499999999
+        ]
+      },
+      "properties": {
+        "name": "Ablekuma Taxi Stand",
+        "address": "JMGR+R4C, Ablekuma Fan-Milk"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2554674,
+          5.6264253
+        ]
+      },
+      "properties": {
+        "name": "Capital Credit",
+        "address": "JPGV+HR6, New Achimota, Chantan Market, Behind The Taxi Rank, Nii Okaiman East"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2350178,
+          5.626447499999999
+        ]
+      },
+      "properties": {
+        "name": "Melcom Busstop",
+        "address": "JQG8+P38, Nsawam Road, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2409096,
+          5.6344085
+        ]
+      },
+      "properties": {
+        "name": "Mayson Pharmaceuticals",
+        "address": "Mile Seven Taxi Rank Mile Seven Road"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.234345,
+          5.612781
+        ]
+      },
+      "properties": {
+        "name": "Nkum's X-Ray And Scan Centre",
+        "address": "near Kingsby Taxi Rank, New Achimota, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.176462,
+          5.627839900000001
+        ]
+      },
+      "properties": {
+        "name": "Shiashi Bus Stop Foot Bridge",
+        "address": "JRHF+4CM Hav Motors, Boundary Road Shiashi Bus stop Foot Bridge, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1080394,
+          5.6260838
+        ]
+      },
+      "properties": {
+        "name": "Okpoi Gonno Taxi Rank speedaf",
+        "address": "About 1000 metres from the, Spintex Rd, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.114532,
+          5.626197899999999
+        ]
+      },
+      "properties": {
+        "name": "O'Reilly Taxi Rank",
+        "address": "JVGP+C5X, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1084263,
+          5.627217799999999
+        ]
+      },
+      "properties": {
+        "name": "A Sisters Guest House",
+        "address": "JVGR+VJP, Okpoi Gonno Taxi Rank, Spintex Road, costal road,O'ralley S.H.S, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1006351,
+          5.634943499999999
+        ]
+      },
+      "properties": {
+        "name": "Coastal Estate Junction Taxi Rank",
+        "address": "JVMX+XPH, Coastal Main Rd, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1068339,
+          5.6278435
+        ]
+      },
+      "properties": {
+        "name": "BKN Modern Furnitures Ltd",
+        "address": "Taxi Rank Close to Voltic Pure Water Factory, Spintex Rd, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1080312,
+          5.626138699999999
+        ]
+      },
+      "properties": {
+        "name": "Queen Esther's Ointment",
+        "address": "taxi rank speedaf, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.0901879,
+          5.629148499999999
+        ]
+      },
+      "properties": {
+        "name": "Kotobabi Taxi Rank.",
+        "address": "JWH5+MW3, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.0593911,
+          5.631490599999999
+        ]
+      },
+      "properties": {
+        "name": "NTHC Taxi station",
+        "address": "Sakumono"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2688533,
+          5.638461899999999
+        ]
+      },
+      "properties": {
+        "name": "Yellow House, St. John's Taxi Rank",
+        "address": "Commando St"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2591356,
+          5.6384418
+        ]
+      },
+      "properties": {
+        "name": "Golden door Taxi Rank",
+        "address": "JPQR+98H Golden Door, Tantra St, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2419868,
+          5.6392975
+        ]
+      },
+      "properties": {
+        "name": "TANTRA, YELLOW HOUSE- TAXI RANK",
+        "address": "JQQ5+P75, St. Johns Lake, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2405553,
+          5.6345417
+        ]
+      },
+      "properties": {
+        "name": "DeRoyal International Education & Travel Ltd",
+        "address": "Achimota Mile 7 Junction, Behind Ecobank Opposite the taxi rank"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.178952,
+          5.640959899999999
+        ]
+      },
+      "properties": {
+        "name": "Legon Taxi Station",
+        "address": "JRRC+9CM, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.178116,
+          5.6416841
+        ]
+      },
+      "properties": {
+        "name": "Okponglo Bus Stop",
+        "address": "Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.186202,
+          5.6437951
+        ]
+      },
+      "properties": {
+        "name": "Achimota Bus Stop - Legon Campus",
+        "address": "JRV7+GG7, Noguchie Link, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.17815,
+          5.6397935
+        ]
+      },
+      "properties": {
+        "name": "Okponglo Bus Stop",
+        "address": "Legon E Rd, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1775614,
+          5.640533800000001
+        ]
+      },
+      "properties": {
+        "name": "YPT Ghana",
+        "address": "Okponglo Taxi Rank, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1761314,
+          5.6408827
+        ]
+      },
+      "properties": {
+        "name": "BRUKU KEYS CUTTING & PROGRAMMING KEYS,ECU,REPAIR AND ALL (EAST LEGON BRANCH)",
+        "address": "Okponglo taxi Rank, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1772687,
+          5.6403272
+        ]
+      },
+      "properties": {
+        "name": "Edwom Express",
+        "address": "Okponglo Taxi Rank"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1764931,
+          5.6409669
+        ]
+      },
+      "properties": {
+        "name": "Supreme Hostel",
+        "address": "Okponglo Taxi Rank, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.161359,
+          5.635828
+        ]
+      },
+      "properties": {
+        "name": "Sargent waiting agency gh",
+        "address": "Okponglo taxi rank, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1284503,
+          5.641245899999999
+        ]
+      },
+      "properties": {
+        "name": "Manet Motorway Taxi Rank-Golf house shiashie",
+        "address": "JVRC+FJV, Adjiringano Rd, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1284215,
+          5.6411084
+        ]
+      },
+      "properties": {
+        "name": "Motorway Manet Bus stop",
+        "address": "JVRC+CJW, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1266064,
+          5.6376136
+        ]
+      },
+      "properties": {
+        "name": "Shaxi Ghana Official (Shatta Taxi)",
+        "address": "Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1090625,
+          5.626312500000001
+        ]
+      },
+      "properties": {
+        "name": "Breakilicious Jamaican Street Food Restaurants",
+        "address": "Taxi Rank, JVGR+G9X Accra Hydraform Estates, Okpoi Gonno, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1080719,
+          5.626253200000001
+        ]
+      },
+      "properties": {
+        "name": "Bubbles Laundromat & Cleaning Services",
+        "address": "Taxi Rank, Spintex"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.105431,
+          5.637044899999999
+        ]
+      },
+      "properties": {
+        "name": "Heritage Investments Hotel",
+        "address": "Aviation Highway, Spintex Rd, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.236365,
+          5.6479849
+        ]
+      },
+      "properties": {
+        "name": "Dome Crossing, Taxi Rank",
+        "address": "Dome Road, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2165091,
+          5.6531346
+        ]
+      },
+      "properties": {
+        "name": "Dome Pillar 2, Ohene Down Taxi Rank",
+        "address": "9 Trinity St, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1794245,
+          5.649464699999999
+        ]
+      },
+      "properties": {
+        "name": "Legon Taxi Stand",
+        "address": "JRXC+Q6P, Legon E Rd, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1762356,
+          5.641017199999999
+        ]
+      },
+      "properties": {
+        "name": "JobHouse HR Outsourcing Company (Ghana)",
+        "address": "Opposite Okponglo Taxi Rank"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1605244,
+          5.649275
+        ]
+      },
+      "properties": {
+        "name": "Diaspora Network Television (DNT)",
+        "address": "Opposite Blue Gate Taxi Rank, No.10 Nii Sai Rd, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1299436,
+          5.6509675
+        ]
+      },
+      "properties": {
+        "name": "Metazjuice",
+        "address": "E Legon - Trasacco Estate Rd, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1262848,
+          5.6375226
+        ]
+      },
+      "properties": {
+        "name": "Frimps Oil, SPINTEX",
+        "address": "87 Spintex Rd, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.0857646,
+          5.6495147
+        ]
+      },
+      "properties": {
+        "name": "Cambodia Taxi Rank",
+        "address": "JWX7+RM5, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.0712531,
+          5.6471711
+        ]
+      },
+      "properties": {
+        "name": "Block factory Taxi Rank",
+        "address": "Doris D Community 18 block factory, GT-033-9551, D&D road"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.3007897,
+          5.6646516
+        ]
+      },
+      "properties": {
+        "name": "God Hands Local Foods",
+        "address": "Amamorle, Taxi Rank, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2994987,
+          5.6649517
+        ]
+      },
+      "properties": {
+        "name": "Odumasi Bus Stop",
+        "address": "MP72+X6J, Amamorley Community Town"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2674204,
+          5.658059799999999
+        ]
+      },
+      "properties": {
+        "name": "THE BEAUTY OUTLET",
+        "address": "Taxi Rank, GG-544-4743, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2533254,
+          5.6582192
+        ]
+      },
+      "properties": {
+        "name": "Taifa GPRTU Station",
+        "address": "MP5W+7MM, Unnamed Road, Taifa"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2532117,
+          5.6580948
+        ]
+      },
+      "properties": {
+        "name": "Porkaholics Africa",
+        "address": "Taifa Market opp the taxi rank, Taifa"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2363575,
+          5.6483609
+        ]
+      },
+      "properties": {
+        "name": "PK DREAM BIG ENTERPRISE",
+        "address": "Dome Crossing taxi rank opposite, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1814384,
+          5.6625652
+        ]
+      },
+      "properties": {
+        "name": "Taxi Rank",
+        "address": "MR79+2CF, Unnamed Road, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1389399,
+          5.659108199999999
+        ]
+      },
+      "properties": {
+        "name": "Dzan ayor taxi rank polytank",
+        "address": "MV56+H4M, Madina"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.075884,
+          5.6611823
+        ]
+      },
+      "properties": {
+        "name": "Motorway Borteyman Taxi Station",
+        "address": "MW6F+HGQ, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.3086076,
+          5.6721222
+        ]
+      },
+      "properties": {
+        "name": "Ga Odumase Taxi Rank",
+        "address": "MMCR+RHR, Amamorley Community Town"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2716092,
+          5.672639999999999
+        ]
+      },
+      "properties": {
+        "name": "Agya Herbal Riders",
+        "address": "Taifa"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2505936,
+          5.67403
+        ]
+      },
+      "properties": {
+        "name": "Black gate Taxi Rank",
+        "address": "MPFX+JQ7, DN Uber driver st, Taifa - Burkina Rd, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2507132,
+          5.67392
+        ]
+      },
+      "properties": {
+        "name": "The Forsons Bar and Restaurant",
+        "address": "Black gate Taxi Rank, Taifa"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2392165,
+          5.6676031
+        ]
+      },
+      "properties": {
+        "name": "Atomic Down, Roundabout",
+        "address": "Taifa"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2388101,
+          5.674911700000001
+        ]
+      },
+      "properties": {
+        "name": "Wonder Junction",
+        "address": "MQF6+XF8, Kwabenya"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.238491,
+          5.6678166
+        ]
+      },
+      "properties": {
+        "name": "Accra Trotro Station (Atomic Down)",
+        "address": "MQ96+4JC, ACI Rd"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2147169,
+          5.667589800000001
+        ]
+      },
+      "properties": {
+        "name": "Asore Junction",
+        "address": "Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.2050816,
+          5.6675491
+        ]
+      },
+      "properties": {
+        "name": "Ecomog Taxi Station",
+        "address": "MQ9V+2X7, Haatso-Atomic Rd, Haatso"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1771481,
+          5.667036
+        ]
+      },
+      "properties": {
+        "name": "INSTANT BUY VENTURES",
+        "address": "Taxi Rank, Atomic Junction Roundabout, Accra"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.1663579,
+          5.6731379
+        ]
+      },
+      "properties": {
+        "name": "TINA WORTH VENTURES",
+        "address": "MRFM+7F2 MADINA TAXI RANK, Madina"
+      }
+    }
+  ]
+}

@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" name="referrer" content="strict-origin-when-cross-origin">
+<title>OpenLayers GeoJSON Animation</title>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@7.5.2/ol.css">
+<script src="https://cdn.jsdelivr.net/npm/ol@7.5.2/dist/ol.js"></script>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+#map {
+  flex: 1;
+  width: 100%;
+}
+#controls {
+  padding: 10px;
+  background: #f8f9fa;
+  font-family: Arial;
+}
+#controls .form-range {
+  width: 100%;
+}
+#legend { margin-top:10px; }
+.legend-item { display:inline-flex; align-items:center; margin-right:15px; font-size:14px; }
+.legend-circle { width:15px; height:15px; border-radius:50%; display:inline-block; margin-right:3px; }
+.legend-star {
+  width:15px; height:15px;
+  clip-path: polygon(
+    50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 
+    50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%
+  ); 
+  display:inline-block;
+}
+#activeCounter { font-weight: bold; }
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<div id="controls" class="container-fluid">
+<div class="d-flex align-items-center mb-2">
+  <div class="me-2">
+    <button id="playBtn" class="btn btn-primary" disabled>Loading...</button>
+    <button id="resetBtn" class="btn btn-secondary">Reset</button>
+  </div>
+
+  <div class="me-2" style="flex:1;">
+    <div class="d-flex align-items-center mb-1">
+      <label class="form-label mb-0 me-2">Speed:</label>
+      <span id="speedLabel">360x</span>
+    </div>
+    <input type="range" id="speedSlider" class="form-range" min="60" max="3000" value="360" step="60">
+  </div>
+
+  <div style="flex:2;">
+    <div class="d-flex align-items-center mb-1">
+      <label class="form-label mb-0 me-2">Timeline:</label>
+      <span id="timeLabel" class="ms-2">Waiting for data...</span>
+    </div>
+    <input type="range" id="timeSlider" class="form-range">
+  </div>
+</div>
+
+  <div id="legend" class="row">
+    <div class="col-12 d-flex flex-wrap align-items-center">
+      <strong class="me-2">Trip Type:</strong>
+      <span id="taxiRankLegend" class="legend-item d-flex align-items-center me-3">
+        <span class="legend-circle mx-1" style="background:blue;"></span>Taxi rank
+      </span>
+      <span id="hailLegend" class="legend-item d-flex align-items-center me-3">
+        <span class="legend-circle mx-1" style="background:purple;"></span>Hail
+      </span>
+      <span id="passengerLegend" class="legend-item d-flex align-items-center me-3">
+        <span class="legend-circle mx-1" style="background:green;"></span>Passenger
+      </span>
+       <span id="pickupLegend" class="legend-item d-flex align-items-center me-3">
+        <span class="legend-circle mx-1" style="background:orange"></span>Pickup
+      </span>
+      <span id="swapLegend" class="legend-item d-flex align-items-center me-3">
+        <span class="legend-circle mx-1" style="background:red;"></span>Swap
+      </span>
+      <span id="idleLegend" class="legend-item d-flex align-items-center me-3">
+        <span class="legend-circle mx-1" style="background:black;"></span>Idle
+      </span>
+
+      <strong class="ms-3 me-2">Locations:</strong>
+      <span id="swapLayerLegend" class="legend-item d-flex align-items-center">
+        <span class="legend-star mx-1" style="background:red;"></span>Swap station
+      </span>
+      <span id="rankLayerLegend" class="legend-item d-flex align-items-center">
+        <span class="legend-star mx-1" style="background:blue;"></span>Taxi rank
+      </span>
+      <span class="badge bg-dark ms-3">Active Agents: <span id="activeCounter">0</span></span>  
+    </div>
+    
+  </div>
+</div>
+
+<script>
+//////////////////////////////////////////////////////////
+// CONFIG
+//////////////////////////////////////////////////////////
+
+const FILE_PREFIX = "agent_";
+const FILE_SUFFIX = "_time.geojson";
+
+let DATA_FOLDER = "";
+let AREA_FILE = "";
+let SWAP_FILE = "";
+let RANK_FILE = "";
+let NUM_AGENTS = 0;
+
+//////////////////////////////////////////////////////////
+// MAP SETUP
+//////////////////////////////////////////////////////////
+const map = new ol.Map({
+  target: 'map',
+  layers: [ new ol.layer.Tile({ source: new ol.source.OSM() }) ],
+  view: new ol.View({ center: ol.proj.fromLonLat([0,0]), zoom:12 })
+});
+
+const areaLayer = new ol.layer.Vector({
+  source: new ol.source.Vector(),
+  style: new ol.style.Style({
+    stroke: new ol.style.Stroke({ color:"#FF0000", width:2 }),
+    fill: new ol.style.Fill({ color:"rgba(255,0,0,0.1)" })
+  })
+});
+map.addLayer(areaLayer);
+
+const swapLayer = new ol.layer.Vector({
+  source: new ol.source.Vector(),
+  style: new ol.style.Style({
+    image: new ol.style.RegularShape({
+      points: 5, radius: 8, radius2: 4, angle: 0,
+      fill: new ol.style.Fill({ color:"red" })
+    })
+  })
+});
+map.addLayer(swapLayer);
+
+const rankLayer = new ol.layer.Vector({
+  source: new ol.source.Vector(),
+  style: new ol.style.Style({
+    image: new ol.style.RegularShape({
+      points: 5, radius: 5, radius2: 2.5, angle: 0,
+      fill: new ol.style.Fill({ color:"blue" })
+    })
+  })
+});
+map.addLayer(rankLayer);
+
+const animationLayer = new ol.layer.Vector({ source: new ol.source.Vector() });
+map.addLayer(animationLayer);
+
+//////////////////////////////////////////////////////////
+// DATA LOADING
+//////////////////////////////////////////////////////////
+
+let features = [];
+let globalStart = Infinity;
+let globalEnd = -Infinity;
+let currentTime, playing = false, animationId;
+
+async function loadGeoJSON(file, layer) {
+  try {
+    const res = await fetch(file);
+    const geojson = await res.json();
+    const feats = new ol.format.GeoJSON().readFeatures(geojson, { featureProjection:"EPSG:3857" });
+    layer.getSource().addFeatures(feats);
+    return feats;
+  } catch(e) { 
+    console.warn(`Could not load ${file}`, e); 
+  }
+}
+
+function getColor(type) {
+  const colors = { "to_swap": "red", "taxi": "blue", "hail": "purple", "passenger": "green", "pickup": "orange" };
+  return colors[type] || "black";
+}
+
+
+//////////////////////////////////////////////////////////
+// TIMELINE & RENDERING
+//////////////////////////////////////////////////////////
+
+function initializeTimeline() {
+  if (globalStart === Infinity) {
+    document.getElementById("timeLabel").innerText = "No agent data found.";
+    return;
+  }
+  
+  currentTime = globalStart;
+  const slider = document.getElementById("timeSlider");
+  slider.min = globalStart;
+  slider.max = globalEnd;
+  slider.value = currentTime;
+  
+  document.getElementById("playBtn").disabled = false;
+  document.getElementById("playBtn").innerText = "Play";
+  updateTimeLabel();
+}
+
+function updateTimeLabel() {
+  document.getElementById("timeLabel").innerText = new Date(currentTime).toLocaleString();
+}
+
+function renderFrame() {
+  const source = animationLayer.getSource();
+  source.clear();
+
+  // Track unique agent IDs active at this timestamp
+  const activeAgentsThisFrame = new Set();
+
+  features.forEach(f => {
+    const start = f.get("start"), end = f.get("end");
+    if(currentTime < start || currentTime > end) return;
+
+    // Add agent ID to set
+    activeAgentsThisFrame.add(f.get("agent"));
+
+    const geom = f.getGeometry(), tripType = f.get("type"), color = getColor(tripType);
+
+if (geom.getType() === "LineString") {
+  const coords = geom.getCoordinates();
+  const segments = f.get("segments");
+
+  if (!segments || segments.length === 0) return;  // <-- skip if no segments
+
+  const elapsed = (currentTime - start) / 1000; // seconds
+
+  let cumulative = 0;
+  let segmentIndex = 0;
+
+  for (let i = 0; i < segments.length; i++) {
+    const segTime = segments[i].travel_time_s;
+    if (elapsed <= cumulative + segTime) {
+      segmentIndex = i;
+      break;
+    }
+    cumulative += segTime;
+  }
+
+  if (segmentIndex >= coords.length - 1) segmentIndex = coords.length - 2;
+
+  const seg = segments.find(s => elapsed >= s.cumStart && elapsed <= s.cumEnd);
+  if (!seg) return;  // <-- skip if no matching segment
+
+  const segFraction = (elapsed - seg.cumStart) / (seg.cumEnd - seg.cumStart);
+
+  const startCoord = coords[segmentIndex];
+  const endCoord = coords[segmentIndex + 1];
+
+  const interpCoord = [
+    startCoord[0] + (endCoord[0] - startCoord[0]) * segFraction,
+    startCoord[1] + (endCoord[1] - startCoord[1]) * segFraction
+  ];
+
+  const movingPoint = new ol.Feature(new ol.geom.Point(interpCoord));
+  movingPoint.setStyle(new ol.style.Style({
+    image: new ol.style.Circle({ 
+      radius: 6,
+      fill: new ol.style.Fill({ color }),
+      stroke: new ol.style.Stroke({ color: "#fff", width: 2 })
+    })
+  }));
+
+  source.addFeature(movingPoint);
+}
+    
+    else if(geom.getType() === "Point") {
+      const stationary = new ol.Feature(new ol.geom.Point(geom.getCoordinates()));
+      stationary.setStyle(new ol.style.Style({
+        image: new ol.style.Circle({ 
+            radius:7, 
+            fill:new ol.style.Fill({color}), 
+            stroke:new ol.style.Stroke({color:"#000", width:2}) 
+        })
+      }));
+      source.addFeature(stationary);
+    }
+  });
+
+  // Update counter display
+  document.getElementById("activeCounter").innerText = activeAgentsThisFrame.size;
+}
+
+function animate() {
+  if(!playing) return;
+  const speedMultiplier = parseInt(document.getElementById("speedSlider").value);
+  currentTime += speedMultiplier * 1000 / 60; 
+  if(currentTime > globalEnd) currentTime = globalStart;
+  document.getElementById("timeSlider").value = currentTime;
+  updateTimeLabel();
+  renderFrame();
+  animationId = requestAnimationFrame(animate);
+}
+
+//////////////////////////////////////////////////////////
+// UI EVENTS
+//////////////////////////////////////////////////////////
+
+document.getElementById("playBtn").onclick = function() {
+  playing = !playing;
+  this.innerText = playing ? "Stop" : "Play";
+  this.classList.toggle("btn-primary");
+  this.classList.toggle("btn-danger");
+  if(playing) animate();
+  else cancelAnimationFrame(animationId);
+};
+
+document.getElementById("resetBtn").onclick = function() {
+  currentTime = globalStart;
+  document.getElementById("timeSlider").value = currentTime;
+  updateTimeLabel();
+  renderFrame();
+};
+
+document.getElementById("speedSlider").oninput = function() {
+  document.getElementById("speedLabel").innerText = this.value + "x";
+};
+
+document.getElementById("timeSlider").oninput = function() {
+  currentTime = parseInt(this.value);
+  updateTimeLabel();
+  renderFrame();
+};
+
+//////////////////////////////////////////////////////////
+// MAIN LOAD SEQUENCE
+//////////////////////////////////////////////////////////
+
+async function loadScenarioAndData() {
+  try {
+    const res = await fetch("scenario.json");
+    const scenario = await res.json();
+    const folder = scenario.folder_name;
+    DEMAND_MODEL = scenario.demand_model;
+    DATA_FOLDER = folder + "/output/output_trips_time_queued/";
+    AREA_FILE = folder + "/geojson_files/area.geojson";
+    SWAP_FILE = folder + "/geojson_files/swap_stations.geojson"; 
+    if (!DEMAND_MODEL) {
+      RANK_FILE = folder + "/geojson_files/taxi_ranks.geojson";
+    }
+    
+    NUM_AGENTS = scenario.animation_agents;
+    
+
+    if (typeof DEMAND_MODEL !== 'undefined' && DEMAND_MODEL === true) {
+    ['taxiRankLegend', 'hailLegend', "rankLayerLegend"].forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.remove();
+        }
+    });
+    }
+    else {
+      const pickupLegend = document.getElementById('pickupLegend');
+      if (pickupLegend) pickupLegend.remove();
+    }
+
+    const areaFeats = await loadGeoJSON(AREA_FILE, areaLayer);
+    if (areaFeats) map.getView().fit(areaLayer.getSource().getExtent(), { padding:[50,50,50,50] });
+    await loadGeoJSON(SWAP_FILE, swapLayer);
+
+    if (!DEMAND_MODEL) {
+    await loadGeoJSON(RANK_FILE, rankLayer);
+    }
+
+    const agentPromises = [];
+    for(let i=0; i<NUM_AGENTS; i++){
+      const file = DATA_FOLDER + FILE_PREFIX + String(i).padStart(4,"0") + FILE_SUFFIX;
+      agentPromises.push(
+        fetch(file).then(r => r.json()).then(geojson => {
+          const readFeatures = new ol.format.GeoJSON().readFeatures(geojson, { featureProjection:'EPSG:3857' });
+          readFeatures.forEach(f => {
+              const props = f.getProperties();
+              const start = new Date(props.start_time).getTime();
+              const end = new Date(props.end_time).getTime();
+              f.set("start", start);
+              f.set("end", end);
+
+              // === NEW: prepare segments ===
+              const segments = props.segments || [];
+              let cum = 0;
+              segments.forEach(s => {
+                  s.cumStart = cum;
+                  cum += s.travel_time_s;
+                  s.cumEnd = cum;
+              });
+              f.set("segments", segments);
+
+              if (!isNaN(start)) globalStart = Math.min(globalStart, start);
+              if (!isNaN(end)) globalEnd = Math.max(globalEnd, end);
+          });
+          features = features.concat(readFeatures);
+        }).catch(() => {})
+      );
+    }
+
+    await Promise.all(agentPromises);
+    initializeTimeline();
+    renderFrame();
+
+  } catch(e) {
+    console.error("Critical error loading scenario:", e);
+  }
+}
+
+loadScenarioAndData();
+</script>
+</body>
+</html>

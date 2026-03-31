@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>EV 3-Wheeler Taxi Dashboard (Ghana)</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  body { padding: 20px; }
+  .slider-label { font-weight: bold; }
+  .slider-value { margin-left: 10px; }
+  #outputs { margin-top: 20px; }
+  canvas { max-width: 100%; }
+</style>
+</head>
+<body>
+
+<div class="container-fluid">
+  <h1 class="mb-4">EV 3-Wheeler Battery Swap Taxi Dashboard</h1>
+
+  <!-- File input & Export button side by side -->
+  <div class="row mb-3 align-items-center">
+    <div class="col">
+      <input type="file" id="fileInput" class="form-control" accept=".xlsx" />
+    </div>
+    <div class="col d-flex justify-content-start">
+      <button id="exportBtn" class="btn btn-primary">Export Current Inputs & Outputs to Excel</button>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Input sliders -->
+    <div class="col-md-6">
+      <h3>Inputs</h3>
+      <div id="inputsContainer"></div>
+    </div>
+
+    <!-- Chart & outputs table -->
+    <div class="col-md-6">
+      <h3>Monthly cashflow</h3>
+      <div style="height:300px;">
+        <canvas id="cashFlowChart"></canvas>
+      </div>
+      <div id="outputs"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let workbook;
+let inputs = {};
+let defaults = {};
+let chart;
+
+// Excel-style PMT function
+function PMT(rate, nper, pv) {
+  if(rate === 0) return pv / nper;
+  return (rate * pv) / (1 - Math.pow(1 + rate, -nper));
+}
+
+function round2(x) { return Math.round(x*100)/100; }
+
+document.getElementById('fileInput').addEventListener('change', handleFile, false);
+
+function handleFile(e) {
+  const file = e.target.files[0];
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const data = new Uint8Array(e.target.result);
+    workbook = XLSX.read(data, { type: 'array' });
+
+    const ws = workbook.Sheets['Assumptions'] || workbook.Sheets['Assumptions_Ghana'];
+    const json = XLSX.utils.sheet_to_json(ws, { header:1 });
+
+    json.forEach(row => {
+      const [label, value] = row;
+      if(typeof value === 'number') {
+        defaults[label] = value;
+        inputs[label] = value;
+      }
+    });
+
+    buildSliders();
+    computeOutputs();
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function buildSliders() {
+  const container = document.getElementById('inputsContainer');
+  container.innerHTML = '';
+
+  Object.keys(defaults).forEach(key => {
+    const div = document.createElement('div');
+    div.className = 'mb-2';
+
+    // --- Flex container for label + value ---
+    const labelContainer = document.createElement('div');
+    labelContainer.style.display = 'flex';
+    labelContainer.style.justifyContent = 'space-between';
+    labelContainer.style.alignItems = 'center';
+    labelContainer.style.marginBottom = '0.25rem';
+
+    const label = document.createElement('label');
+    label.className = 'form-label slider-label';
+    label.textContent = key;
+
+    const span = document.createElement('span');
+    span.className = 'slider-value';
+    span.textContent = defaults[key];
+
+    labelContainer.appendChild(label);
+    labelContainer.appendChild(span);
+
+    // --- Slider input ---
+    const input = document.createElement('input');
+    input.type = 'range';
+    input.className = 'form-range';
+    input.min = Math.max(0, defaults[key] * 0.5);
+    input.max = defaults[key] * 1.5;
+    input.step = defaults[key] * 0.01;
+    input.value = defaults[key];
+
+    input.oninput = () => {
+      inputs[key] = parseFloat(input.value);
+      span.textContent = input.value;
+      computeOutputs();
+    };
+
+    // --- Append to parent div ---
+    div.appendChild(labelContainer);
+    div.appendChild(input);
+    container.appendChild(div);
+  });
+}
+
+function computeOutputs() {
+  if(!inputs['Vehicle Purchase Price']) return;
+
+  const equity = round2(inputs['Vehicle Purchase Price'] * (inputs['Equity Contribution (%)']));
+  const loanAmount = round2(inputs['Vehicle Purchase Price'] - equity);
+  const monthlyInterestRate = inputs['Loan Interest Rate (annual)'] / 12;
+  const n = inputs['Loan Term (months)'];
+
+  // Excel-style PMT
+  const monthlyLoanPayment = round2(PMT(monthlyInterestRate, n, loanAmount));
+
+  const monthlyRevenue = round2(inputs['Driver Daily Revenue'] * inputs['Operating Days per Month']);
+  const totalOpex = round2(inputs['Battery Subscription per Month'] + inputs['Insurance per Month'] + inputs['Maintenance per Month'] + inputs['Other Operating Costs per Month']);
+  const totalCosts = round2(monthlyLoanPayment + totalOpex);
+  const netCashFlow = round2(monthlyRevenue - totalCosts);
+  const annualCashFlow = round2(netCashFlow*12);
+
+  // Update table
+  const outputsDiv = document.getElementById('outputs');
+  outputsDiv.innerHTML = `
+    <table class="table table-sm table-bordered mt-2">
+      <thead><tr><th>Metric</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td>Equity Amount</td><td>${equity}</td></tr>
+        <tr><td>Loan Amount</td><td>${loanAmount}</td></tr>
+        <tr><td>Monthly Loan Payment</td><td>${monthlyLoanPayment}</td></tr>
+        <tr><td>Monthly Revenue</td><td>${monthlyRevenue}</td></tr>
+        <tr><td>Total Monthly Opex</td><td>${totalOpex}</td></tr>
+        <tr><td>Monthly Net Cash Flow</td><td>${netCashFlow}</td></tr>
+        <tr><td>Annual Net Cash Flow</td><td>${annualCashFlow}</td></tr>
+      </tbody>
+    </table>
+  `;
+
+  // Update chart
+  const ctx = document.getElementById('cashFlowChart').getContext('2d');
+  if(chart) chart.destroy();
+  chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Revenue', 'Opex', 'Loan Payment', 'Net Cash Flow'],
+      datasets: [{
+        label: 'GHS',
+        data: [monthlyRevenue, totalOpex, monthlyLoanPayment, netCashFlow],
+        backgroundColor: ['#4caf50','#f44336','#2196f3','#ff9800']
+      }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: { y: { beginAtZero:true } }
+    }
+  });
+}
+
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const wbOut = XLSX.utils.book_new();
+  const wsData = [["Metric","Value"]];
+  for(let key in inputs) wsData.push([key, inputs[key]]);
+  const outputsTable = document.querySelector('#outputs table');
+  if(outputsTable){
+    const rows = outputsTable.rows;
+    for(let i=1;i<rows.length;i++){
+      wsData.push([rows[i].cells[0].textContent, parseFloat(rows[i].cells[1].textContent)]);
+    }
+  }
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  XLSX.utils.book_append_sheet(wbOut, ws, 'Dashboard_Export');
+  XLSX.writeFile(wbOut,'EV3Wheeler_BusinessCase_Dashboard.xlsx');
+});
+</script>
+
+</body>
+</html>

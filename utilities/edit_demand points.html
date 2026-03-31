@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Demand Points Editor</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@7.5.2/ol.css">
+
+<style>
+html, body { margin:0; padding:0; height:100%; display:flex; flex-direction:column; }
+#controls { padding:10px; background:#f4f4f4; display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
+#main { flex:1; display:flex; min-height:0; }
+#map { flex:1; }
+#categoryPane { width:280px; border-left:1px solid #ccc; padding:10px; background:#fafafa; overflow-y:auto; }
+.category-row { display:flex; align-items:center; gap:5px; margin-bottom:5px; }
+.overlay-container { background:white; padding:15px; border:1px solid #ccc; border-radius: 4px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); min-width:220px; z-index:1000; }
+.overlay-container input, .overlay-container select { margin-bottom:5px; width:100%; }
+#quickAddCatSelect { width:120px; }
+#quickAddWeightInput { width: 70px; }
+.btn.active { font-weight: bold; border-width: 2px; }
+</style>
+</head>
+<body>
+
+<div id="controls" class="container-fluid">
+  <label class="btn btn-outline-secondary btn-sm me-2" for="fileInput">Import area</label>
+  <input type="file" id="fileInput" accept=".geojson,.json" style="display:none;">
+  
+  <label class="btn btn-outline-secondary btn-sm me-2" for="facilityInput">Import demand points</label>
+  <input type="file" id="facilityInput" accept=".geojson,.json" style="display:none;">
+  
+  <button id="exportFacilitiesBtn" class="btn btn-primary btn-sm">Export points</button>
+  <button id="addFacilityBtn" class="btn btn-outline-success btn-sm">Add points</button>
+  <button id="deleteFacilityBtn" class="btn btn-outline-danger btn-sm">Delete points</button>
+  
+  <div class="vr mx-2"></div>
+  
+  <button id="quickAddBtn" class="btn btn-outline-info btn-sm">Quick Add</button>
+  <select id="quickAddCatSelect" class="form-select form-select-sm" title="Category for Quick Add"></select>
+  <div class="input-group input-group-sm" style="width: auto;">
+    <span class="input-group-text">Weight</span>
+    <input type="number" id="quickAddWeightInput" class="form-control" value="1" step="0.1">
+  </div>
+  <label class="btn btn-outline-info btn-sm me-2" for="categoryImportInput">Import to Category</label>
+  <input type="file" id="categoryImportInput" accept=".geojson,.json" style="display:none;">
+  
+  <span id="progress"></span>
+</div>
+
+<div id="main">
+  <div id="map"></div>
+  <div id="categoryPane">
+    <h6>Categories & Visibility</h6>
+    <div id="categoryList"></div>
+    <div class="input-group input-group-sm mt-2">
+      <input id="newCategoryInput" class="form-control" placeholder="New category">
+      <button id="addCategoryBtn" class="btn btn-outline-primary">Add</button>
+    </div>
+  </div>
+</div>
+
+<div id="popup" class="overlay-container" style="display:none;"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/ol@7.5.2/dist/ol.js"></script>
+<script>
+// ---------------- MAP & LAYERS ----------------
+const rasterLayer = new ol.layer.Tile({ source: new ol.source.OSM({ attributions:'© OpenStreetMap contributors' }) });
+const vectorSource = new ol.source.Vector();
+const vectorLayer = new ol.layer.Vector({
+  source: vectorSource,
+  style: new ol.style.Style({
+    stroke: new ol.style.Stroke({ color:'red', width:2 }),
+    fill: new ol.style.Fill({ color:'rgba(255,0,0,0.2)' })
+  })
+});
+const facilitySource = new ol.source.Vector();
+let categories = [];
+let categoryColors = {};
+let categoryVisibility = {};
+
+const facilityLayer = new ol.layer.Vector({
+  source: facilitySource,
+  style: feature => {
+    const cat = feature.get('category');
+    if(cat && categoryVisibility[cat]===false) return new ol.style.Style({});
+    const color = (cat && categoryColors[cat]) || '#888';
+    return new ol.style.Style({
+      image: new ol.style.Circle({
+        radius:6,
+        fill: new ol.style.Fill({color}),
+        stroke: new ol.style.Stroke({color:'#fff', width:1})
+      })
+    });
+  }
+});
+
+const map = new ol.Map({
+  target:'map',
+  layers:[rasterLayer, vectorLayer, facilityLayer],
+  view:new ol.View({
+    center: ol.proj.fromLonLat([0,0]),
+    zoom:2
+  })
+});
+
+// ---------------- GLOBALS ----------------
+let nextFacilityId = 1;
+let facilityIdField = null;
+let facilityOriginalFields = [];
+let drawMode = false;
+let deleteMode = false;
+let quickAddMode = false;
+let currentFeature = null;
+let lastImportedFacilityFilename = null;
+
+// ---------------- HELPERS ----------------
+function randomColor(){ return '#'+Math.floor(Math.random()*16777215).toString(16).padStart(6,'0'); }
+function isInsidePolygon(feature){
+  const polygons = vectorSource.getFeatures();
+  if(!polygons.length) return true;
+  const point = feature.getGeometry();
+  return polygons.some(poly => poly.getGeometry().intersectsCoordinate(point.getCoordinates()));
+}
+function getNextUniqueId(idField){
+  let uniqueId;
+  do { uniqueId = nextFacilityId++; } 
+  while(facilitySource.getFeatures().some(f => f.get(idField) == uniqueId));
+  return uniqueId;
+}
+
+// ---------------- CATEGORY PANE ----------------
+function renderCategories(){
+  const div = document.getElementById('categoryList'); div.innerHTML='';
+  categories.forEach(cat=>{
+    const row = document.createElement('div'); row.className='category-row';
+    const visChk = document.createElement('input'); visChk.type='checkbox';
+    visChk.checked = categoryVisibility[cat]!==false;
+    visChk.onchange = ()=>{ categoryVisibility[cat]=visChk.checked; facilityLayer.changed(); };
+    const colorBox = document.createElement('input'); colorBox.type='color'; colorBox.value=categoryColors[cat];
+    colorBox.onchange = ()=>{ categoryColors[cat]=colorBox.value; facilityLayer.changed(); };
+    const label = document.createElement('span'); label.textContent=cat;
+    const del = document.createElement('button'); del.textContent='×'; del.className='btn btn-sm btn-danger';
+    del.onclick = ()=>{
+      if(!confirm("Delete category? Features will be reassigned.")) return;
+      const fallback = categories.find(c=>c!==cat) || '';
+      facilitySource.getFeatures().forEach(f=>{ if(f.get('category')===cat) f.set('category', fallback); });
+      categories = categories.filter(c=>c!==cat);
+      delete categoryColors[cat]; delete categoryVisibility[cat];
+      renderCategories(); facilityLayer.changed();
+    };
+    row.appendChild(visChk); row.appendChild(colorBox); row.appendChild(label); row.appendChild(del);
+    div.appendChild(row);
+  });
+  updateQuickAddDropdown();
+}
+
+document.getElementById('addCategoryBtn').onclick = ()=>{
+  const input = document.getElementById('newCategoryInput'); const val = input.value.trim();
+  if(!val || categories.includes(val)) return;
+  categories.push(val); categoryColors[val]=randomColor(); categoryVisibility[val]=true;
+  renderCategories(); input.value='';
+};
+
+function updateQuickAddDropdown(){
+  const quickAddSelect = document.getElementById('quickAddCatSelect');
+  quickAddSelect.innerHTML='';
+  categories.forEach(c=>{ const opt=document.createElement('option'); opt.value=c; opt.textContent=c; quickAddSelect.appendChild(opt); });
+}
+
+// ---------------- MODE TOGGLES ----------------
+const quickAddBtn = document.getElementById('quickAddBtn');
+quickAddBtn.onclick = ()=>{
+  quickAddMode = !quickAddMode;
+  quickAddBtn.classList.toggle('active', quickAddMode);
+  if(quickAddMode){
+    drawMode = false; addBtn.classList.remove('active');
+    deleteMode = false; deleteBtn.classList.remove('active');
+    popup.setPosition(undefined);
+  }
+};
+
+const addBtn = document.getElementById('addFacilityBtn');
+addBtn.onclick = ()=>{
+  drawMode = !drawMode; addBtn.classList.toggle('active', drawMode);
+  deleteMode = false; deleteBtn.classList.remove('active');
+  quickAddMode = false; quickAddBtn.classList.remove('active');
+  popup.setPosition(undefined);
+  currentFeature=null;
+  if(drawMode && !facilityIdField){
+    const idPrompt = prompt("Enter ID field name:","facility_id");
+    if(!idPrompt){ drawMode=false; addBtn.classList.remove('active'); return; }
+    facilityIdField=idPrompt;
+    const fieldsPrompt = prompt("Other fields (comma-separated)","type");
+    facilityOriginalFields = fieldsPrompt?fieldsPrompt.split(',').map(f=>f.trim()).filter(f=>f):[];
+    if(!facilityOriginalFields.includes('category')) facilityOriginalFields.push('category');
+    if(!facilityOriginalFields.includes('weight_in_category')) facilityOriginalFields.push('weight_in_category');
+  }
+};
+
+const deleteBtn = document.getElementById('deleteFacilityBtn');
+deleteBtn.onclick = ()=>{
+  deleteMode = !deleteMode;
+  deleteBtn.classList.toggle('active', deleteMode);
+  drawMode = false; addBtn.classList.remove('active');
+  quickAddMode = false; quickAddBtn.classList.remove('active');
+  popup.setPosition(undefined);
+  currentFeature=null;
+};
+
+// ---------------- CREATE FACILITY ----------------
+function createFacilityAtPoint(coord, category, weight, showPopupBox){
+  const feature = new ol.Feature(new ol.geom.Point(coord));
+  const allFields = [...facilityOriginalFields];
+  if(!allFields.includes(facilityIdField)) allFields.push(facilityIdField);
+  
+  const numericWeight = parseFloat(weight) || 1;
+
+  allFields.forEach(k=>{
+    if(k===facilityIdField){ const newId=getNextUniqueId(k); feature.set(k,newId); feature.setId(newId); }
+    else if(k==='category') feature.set(k, category||'');
+    else if(k==='weight_in_category') feature.set(k, numericWeight);
+    else feature.set(k,'');
+  });
+  feature.set('___originalFields', allFields);
+  feature.set('___idField', facilityIdField);
+  
+  if(!isInsidePolygon(feature)){ alert("Facility must be inside polygon."); return; }
+  
+  facilitySource.addFeature(feature);
+  if(showPopupBox) showPopup(feature);
+}
+
+// ---------------- MAP CLICK HANDLER (CONSOLIDATED) ----------------
+map.on('singleclick', e=>{
+  if(drawMode){
+    createFacilityAtPoint(e.coordinate, categories[0]||'', 1, true);
+  } 
+  else if(deleteMode){
+    const feature = map.forEachFeatureAtPixel(e.pixel, (f, layer) => {
+      if(layer === facilityLayer) return f;
+    }, { layerFilter: l => l === facilityLayer });
+
+    if(feature){
+      if(confirm("Delete this facility?")){
+        facilitySource.removeFeature(feature);
+        popup.setPosition(undefined); // Ensure popup is gone
+      }
+    }
+  } 
+  else if(quickAddMode){
+    const cat = document.getElementById('quickAddCatSelect').value || (categories[0]||'');
+    const weight = document.getElementById('quickAddWeightInput').value;
+    createFacilityAtPoint(e.coordinate, cat, weight, false);
+  } 
+  else {
+    // Default mode: Select/Edit point
+    const feature = map.forEachFeatureAtPixel(e.pixel, (f, layer) => {
+      if(layer === facilityLayer) return f;
+    }, { layerFilter: l => l === facilityLayer });
+    
+    if(feature) showPopup(feature);
+    else popup.setPosition(undefined);
+  }
+});
+
+// ---------------- POPUP ----------------
+const popup = new ol.Overlay({ element: document.getElementById('popup'), positioning:'bottom-center', stopEvent:true });
+map.addOverlay(popup);
+
+function showPopup(feature){
+  currentFeature=feature;
+  const el=document.getElementById('popup'); el.innerHTML='';
+  const fields = feature.get('___originalFields') || [];
+  const idField = feature.get('___idField');
+  
+  fields.forEach(k=>{
+    const div=document.createElement('div'); div.className='mb-1';
+    const label=document.createElement('label'); label.className='form-label small'; label.textContent=k+':';
+    if(k==='category'){
+      const select=document.createElement('select'); select.className='form-select form-select-sm'; select.dataset.prop=k;
+      categories.forEach(c=>{ const opt=document.createElement('option'); opt.value=c; opt.textContent=c; if(feature.get(k)===c) opt.selected=true; select.appendChild(opt); });
+      div.appendChild(label); div.appendChild(select);
+    } else if(k==='weight_in_category'){
+      const input=document.createElement('input'); input.type='number'; input.min=0; input.step="0.1"; input.value=feature.get(k)||1; input.dataset.prop=k; input.className='form-control form-control-sm';
+      div.appendChild(label); div.appendChild(input);
+    } else {
+      const input=document.createElement('input'); input.dataset.prop=k; input.value=feature.get(k)||''; input.className='form-control form-control-sm';
+      if(k===idField){ input.readOnly=true; input.style.backgroundColor='#eee'; }
+      div.appendChild(label); div.appendChild(input);
+    }
+    el.appendChild(div);
+  });
+  
+  const btnGroup=document.createElement('div'); btnGroup.style.marginTop='5px'; btnGroup.className='d-flex gap-2';
+  const saveBtn=document.createElement('button'); saveBtn.textContent='Save'; saveBtn.className='btn btn-sm btn-primary flex-grow-1';
+  saveBtn.onclick=()=>{
+    el.querySelectorAll('input, select').forEach(inp=>{
+      let val = inp.value;
+      if(inp.dataset.prop===idField) val=parseInt(val,10);
+      else if(inp.dataset.prop==='weight_in_category') val=parseFloat(val)||0;
+      feature.set(inp.dataset.prop,val);
+    }); 
+    el.style.display='none'; 
+    popup.setPosition(undefined);
+    facilityLayer.changed();
+  };
+  const cancelBtn=document.createElement('button'); cancelBtn.textContent='Cancel'; cancelBtn.className='btn btn-sm btn-secondary flex-grow-1';
+  cancelBtn.onclick=()=>{
+    el.style.display='none'; 
+    popup.setPosition(undefined);
+    currentFeature=null;
+  };
+  btnGroup.appendChild(saveBtn); btnGroup.appendChild(cancelBtn); el.appendChild(btnGroup);
+  popup.setPosition(feature.getGeometry().getCoordinates()); el.style.display='block';
+}
+
+// ---------------- MODIFY ----------------
+const modify = new ol.interaction.Modify({ source: facilitySource });
+map.addInteraction(modify);
+
+// ---------------- IMPORT / EXPORT ----------------
+document.getElementById('fileInput').addEventListener('change', e=>{
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const geojson=JSON.parse(ev.target.result);
+      const features=new ol.format.GeoJSON().readFeatures(geojson,{featureProjection:'EPSG:3857'});
+      if(vectorSource.getFeatures().length && !confirm("Replace existing polygon?")) return;
+      vectorSource.clear(); vectorSource.addFeatures(features);
+      if(features.length) map.getView().fit(vectorSource.getExtent(),{padding:[40,40,40,40], duration:600});
+      e.target.value=null;
+    } catch(err){ alert("Invalid GeoJSON"); }
+  };
+  reader.readAsText(file);
+});
+
+document.getElementById('facilityInput').addEventListener('change', e=>{
+  const file = e.target.files[0]; if(!file) return; lastImportedFacilityFilename=file.name;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      let features=new ol.format.GeoJSON().readFeatures(JSON.parse(ev.target.result),{featureProjection:'EPSG:3857'});
+      features=features.filter(f=>f.getGeometry().getType()==='Point');
+      if(!features.length){ alert("No point features found."); return; }
+      if(facilitySource.getFeatures().length>0 && !confirm("Existing facilities will be deleted. Continue?")) return; facilitySource.clear();
+      let idField=null;
+      for(const key in features[0].getProperties()){ if(key!=='geometry' && /^id$|_id|id_/i.test(key)){ idField=key; break; } }
+      if(!idField) idField='facility_id';
+      let originalFields = Object.keys(features[0].getProperties()).filter(k=>k!=='geometry');
+      
+      if(!originalFields.includes('weight_in_category')) originalFields.push('weight_in_category');
+      
+      facilityIdField=idField; facilityOriginalFields=originalFields.filter(f=>f!==idField);
+      features.forEach(f=>{ 
+        f.set('___originalFields',originalFields); 
+        f.set('___idField',idField); 
+        if(f.get('weight_in_category') === undefined) f.set('weight_in_category', 1);
+      });
+      const maxId=Math.max(...features.map(f=>parseInt(f.get(idField))||0)); nextFacilityId=maxId+1;
+      facilitySource.addFeatures(features);
+      const cats = [...new Set(features.map(f=>f.get('category')).filter(c=>c))];
+      cats.forEach(c=>{ if(!categories.includes(c)){ categories.push(c); categoryColors[c]=randomColor(); categoryVisibility[c]=true; } });
+      renderCategories();
+      map.getView().fit(facilitySource.getExtent(),{padding:[40,40,40,40], duration:600});
+      e.target.value=null;
+    } catch(err){ alert("Invalid GeoJSON"); console.error(err); }
+  };
+  reader.readAsText(file);
+});
+
+document.getElementById('exportFacilitiesBtn').addEventListener('click', async ()=>{
+  const features = facilitySource.getFeatures(); if(!features.length){ alert("No facilities to export."); return; }
+  const format = new ol.format.GeoJSON();
+  const exportFeatures = features.map(f=>{
+    const props={}; (f.get('___originalFields')||[]).forEach(k=>{ props[k]=f.get(k)!=null?f.get(k):''; });
+    const newF = new ol.Feature(f.getGeometry().clone()); newF.setProperties(props); newF.setId(undefined); return newF;
+  });
+  const geojson = format.writeFeatures(exportFeatures,{featureProjection:'EPSG:3857', dataProjection:'EPSG:4326'});
+  const blob = new Blob([geojson], { type:'application/json' });
+  if(window.showSaveFilePicker){
+    try{
+      const handle = await window.showSaveFilePicker({ suggestedName:lastImportedFacilityFilename||'facilities.geojson', types:[{description:'GeoJSON', accept:{'application/json':['.geojson','.json']}}]});
+      const writable = await handle.createWritable(); await writable.write(blob); await writable.close(); alert("Facilities saved successfully!"); return;
+    }catch(err){ console.warn("Save cancelled or failed", err); return; }
+  }
+  const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=lastImportedFacilityFilename||'facilities.geojson'; a.click(); URL.revokeObjectURL(url);
+});
+
+// ---------------- HOVER TOOLTIP ----------------
+const hoverOverlay = new ol.Overlay({ element: document.createElement('div'), offset:[10,0], positioning:'center-left' });
+hoverOverlay.getElement().style.cssText='background:rgba(255,255,255,0.9); border:1px solid gray; padding:2px 5px; font-size:12px; pointer-events:none;';
+map.addOverlay(hoverOverlay);
+map.on('pointermove', evt=>{
+  if (evt.dragging) return;
+  const pixel = map.getEventPixel(evt.originalEvent);
+  const hit = map.hasFeatureAtPixel(pixel,{layerFilter:l=>l===facilityLayer});
+  if(!hit){ hoverOverlay.setPosition(undefined); return; }
+  map.forEachFeatureAtPixel(pixel,(feature, layer)=>{
+    if(layer!==facilityLayer) return;
+    const props=feature.getProperties();
+    let idValue='';
+    for(const key in props){ if(key!=='geometry' && /^id$|_id|id_/i.test(key)){ idValue=props[key]; break; } }
+    if(idValue!==''){ hoverOverlay.getElement().textContent=idValue; hoverOverlay.setPosition(feature.getGeometry().getCoordinates()); }
+  },{layerFilter:l=>l===facilityLayer});
+});
+
+document.getElementById('categoryImportInput').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const selectedCategory = document.getElementById('quickAddCatSelect').value;
+  if (!selectedCategory) { alert("Please create and select a category in the sidebar first."); e.target.value = null; return; }
+
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const geojson = JSON.parse(ev.target.result);
+      const features = new ol.format.GeoJSON().readFeatures(geojson, { featureProjection: 'EPSG:3857' });
+      let importCount = 0; let outOfAreaCount = 0;
+
+      if (!facilityIdField) {
+        facilityIdField = 'facility_id';
+        facilityOriginalFields = ['category', 'weight_in_category'];
+      }
+
+      features.forEach(f => {
+        if (f.getGeometry().getType() === 'Point') {
+          if (isInsidePolygon(f)) {
+            const newId = getNextUniqueId(facilityIdField);
+            f.setId(newId);
+            f.set(facilityIdField, newId);
+            f.set('category', selectedCategory);
+            if (f.get('weight_in_category') === undefined) f.set('weight_in_category', 1);
+            f.set('___idField', facilityIdField);
+            f.set('___originalFields', [...facilityOriginalFields]);
+            facilitySource.addFeature(f);
+            importCount++;
+          } else { outOfAreaCount++; }
+        }
+      });
+      alert(`Import Complete!\n- Imported: ${importCount}\n- Outside Area: ${outOfAreaCount}`);
+      facilityLayer.changed();
+      e.target.value = null;
+    } catch (err) { alert("Invalid GeoJSON file."); }
+  };
+  reader.readAsText(file);
+});
+</script>
+</body>
+</html>
