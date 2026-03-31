@@ -3,7 +3,7 @@
 analyze_swap_station_arrivals_grid.py
 """
 
-import os
+import os, datetime
 import json
 import pandas as pd
 from datetime import datetime, timedelta
@@ -27,8 +27,9 @@ CSV_OUTPUT = os.path.join(OUTPUT_DIR, "swap_station_arrivals.csv")
 FIG_OUTPUT = os.path.join(OUTPUT_DIR, "swap_station_arrivals_grid.png")
 
 TIME_BIN_MINUTES = 15
-START_TIME = datetime(2025, 1, 1, 6, 0, 0)
-END_TIME = datetime(2025, 1, 2, 0, 0, 0)
+d_start, d_end = scenario_data["start_time"], scenario_data["end_time"]
+START_TIME = datetime(d_start[0], d_start[1], d_start[2], d_start[3], d_start[4], d_start[5])
+END_TIME = datetime(d_end[0], d_end[1], d_end[2], d_end[3], d_end[4], d_end[5])
 
 NEAREST_TOLERANCE = 0.005  # ~500m
 
