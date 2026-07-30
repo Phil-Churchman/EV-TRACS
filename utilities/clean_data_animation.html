@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Route Animation Tracker</title>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v10.3.1/ol.css">
+    <script src="https://cdn.jsdelivr.net/npm/ol@v10.3.1/dist/ol.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <style>
+        html, body, #map {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        #controls {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            width: 320px;
+        }
+        h3 { margin-top: 0; color: #333; border-bottom: 2px solid #ddd; padding-bottom: 8px;}
+        .file-group { margin-bottom: 12px; }
+        label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 4px; color: #555; }
+        input[type="file"], button, select { width: 100%; padding: 8px; margin-top: 4px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box; }
+        button { background: #007bff; color: white; border: none; font-weight: bold; cursor: pointer; transition: background 0.2s; margin-top: 10px;}
+        button:hover { background: #0056b3; }
+        button:disabled { background: #cccccc; cursor: not-allowed; }
+        .btn-secondary { background: #6c757d; }
+        .btn-secondary:hover { background: #5a6268; }
+        .button-row { display: flex; gap: 8px; }
+        .button-row button { margin-top: 8px; }
+        .telemetry-panel { margin-top: 15px; background: #f8f9fa; padding: 10px; border-radius: 4px; border: 1px solid #e9ecef; font-size: 13px; }
+        .telemetry-row { display: flex; justify-content: space-between; margin-bottom: 4px; align-items: center; }
+        .telemetry-val { font-weight: bold; color: #111; }
+        #timeline { width: 100%; margin-top: 10px; }
+        #mapStationaryBanner {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2000;
+            display: none;
+            background: #dc3545;
+            color: #fff;
+            font-size: 14px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            padding: 8px 16px;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        /* HOVER TOOLTIP WINDOW LOOK AND FEEL */
+        #edgeTooltip {
+            position: absolute;
+            display: none;
+            background: rgba(33, 37, 41, 0.95);
+            color: #fff;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            z-index: 3000;
+            pointer-events: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            border: 1px solid #495057;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div id="mapStationaryBanner">STATIONARY > 1 MIN</div>
+    <div id="edgeTooltip"></div>
+    <div id="controls">
+        <h3>Route Animator</h3>
+        
+        <div class="file-group">
+            <label>1. Select Stage 2 Excel File:</label>
+            <input type="file" id="excelFile" accept=".xlsx">
+        </div>
+        <div class="file-group">
+            <label>2. Select Filtered GraphML File:</label>
+            <input type="file" id="graphmlFile" accept=".graphml">
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
+        
+        <label>Playback Speed Multiplier:</label>
+        <select id="speedMultiplier">
+            <option value="1">1x (Real-time)</option>
+            <option value="5">5x</option>
+            <option value="10" selected>10x</option>
+            <option value="30">30x</option>
+            <option value="60">60x</option>
+            <option value="120">120x</option>
+            <option value="300">300x</option>
+            <option value="600">600x</option>
+            <option value="1200">1200x</option>
+        </select>
+
+        <button id="btnPlayPause" disabled>Play</button>
+        
+        <div class="button-row">
+            <button id="btnSkipNext" class="btn-secondary" disabled>Next Pt</button>
+            <button id="btnSkipHour" class="btn-secondary" disabled>+1 Hour</button>
+        </div>
+
+        <input type="range" id="timeline" min="0" max="100" value="0" disabled>
+
+        <div class="telemetry-panel">
+            <div class="telemetry-row">
+                <span>Date/Time:</span>
+                <span id="telTime" class="telemetry-val">----/--/-- --:--:--</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="map"></div>
+
+    <script>
+        // ============================================================
+        // GLOBAL INITIALIZATION & MAP SETUP
+        // ============================================================
+        let networkEdges = {};   
+        let cachedXlsxRows = null;
+        let chronologicalPath = []; 
+        let lastTimestamp = null;       
+        let animationCurrentTime = 0; 
+        let baseAbsoluteTimestamp = 0; 
+        let totalDurationMs = 0;
+        let isPlaying = false;
+        let animationFrameId = null;
+
+        // Stationary skipping engine states
+        let isWaitingAtStationary = false;
+        let stationaryPauseTimer = 0;
+        let stationaryTargetTime = 0;
+
+        const agentSource = new ol.source.Vector();
+        const networkVectorSource = new ol.source.Vector();
+
+        const map = new ol.Map({
+            target: 'map',
+            layers: [
+                new ol.layer.Tile({ source: new ol.source.OSM() }),
+                new ol.layer.Vector({
+                    source: networkVectorSource,
+                    style: new ol.style.Style({
+                        stroke: new ol.style.Stroke({ color: '#007bff', width: 3 })
+                    })
+                }),
+                new ol.layer.Vector({
+                    source: agentSource,
+                    style: new ol.style.Style({
+                        image: new ol.style.Circle({
+                            radius: 8,
+                            fill: new ol.style.Fill({ color: '#dc3545' }),
+                            stroke: new ol.style.Stroke({ color: '#ffffff', width: 2 })
+                        })
+                    })
+                })
+            ],
+            view: new ol.View({ center: [0, 0], zoom: 2 })
+        });
+
+        const agentFeature = new ol.Feature(new ol.geom.Point([0, 0]));
+        agentSource.addFeature(agentFeature);
+
+        const btnPlayPause = document.getElementById('btnPlayPause');
+        const btnSkipNext = document.getElementById('btnSkipNext');
+        const btnSkipHour = document.getElementById('btnSkipHour');
+        const speedSelect = document.getElementById('speedMultiplier');
+        const timeline = document.getElementById('timeline');
+        const telTime = document.getElementById('telTime');
+        const mapStationaryBanner = document.getElementById('mapStationaryBanner');
+
+        function formatDateTime(ms) {
+            if (isNaN(ms) || ms === 0) return "----/--/-- --:--:--";
+            const d = new Date(ms);
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
+        }
+
+        function parseWktLineString(wkt) {
+            if (!wkt) return null;
+            const match = wkt.match(/\(([^)]+)\)/);
+            if (!match) return null;
+            return match[1].split(',').map(pair => {
+                const parts = pair.trim().split(/\s+/);
+                return [parseFloat(parts[0]), parseFloat(parts[1])];
+            });
+        }
+
+        // ============================================================
+        // GEOMETRY PROJECTION & SMOOTHING ENGINE
+        // ============================================================
+        function projectPointOnChain(pt, chain) {
+            let minDist = Infinity;
+            let bestProj = pt; 
+            let bestSegIdx = 0;
+            let bestTotalDist = 0;
+            let currentChainDist = 0;
+
+            for (let i = 0; i < chain.length - 1; i++) {
+                let p1 = chain[i];
+                let p2 = chain[i+1];
+                let dx = p2[0] - p1[0];
+                let dy = p2[1] - p1[1];
+                let l2 = dx*dx + dy*dy;
+                
+                let t = 0;
+                if (l2 > 0) t = Math.max(0, Math.min(1, ((pt[0] - p1[0]) * dx + (pt[1] - p1[1]) * dy) / l2));
+                
+                let projX = p1[0] + t * dx;
+                let projY = p1[1] + t * dy;
+                
+                let distToProj = Math.hypot(pt[0] - projX, pt[1] - projY);
+                if (distToProj < minDist) {
+                    minDist = distToProj;
+                    bestProj = [projX, projY];
+                    bestSegIdx = i;
+                    bestTotalDist = currentChainDist + (t * Math.sqrt(l2));
+                }
+                currentChainDist += Math.sqrt(l2);
+            }
+            return { pt: bestProj, segIdx: bestSegIdx, totalDist: bestTotalDist };
+        }
+
+        function buildContinuousChain(edgeIds, startCoord, endCoord, graphEdges) {
+            if (!edgeIds || edgeIds.length === 0) return null; 
+            
+            let chain = [];
+            let matchedAny = false;
+
+            edgeIds.forEach(id => {
+                const key = String(id).trim();
+                if (graphEdges[key]) {
+                    matchedAny = true;
+                    let geom = [...graphEdges[key]];
+                    if (chain.length > 0) {
+                        const lastPt = chain[chain.length - 1];
+                        const distToStart = Math.hypot(geom[0][0] - lastPt[0], geom[0][1] - lastPt[1]);
+                        const distToEnd = Math.hypot(geom[geom.length - 1][0] - lastPt[0], geom[geom.length - 1][1] - lastPt[1]);
+                        if (distToEnd < distToStart) geom.reverse();
+                        
+                        if (chain[chain.length-1][0] === geom[0][0] && chain[chain.length-1][1] === geom[0][1]) {
+                            chain.push(...geom.slice(1));
+                        } else {
+                            chain.push(...geom);
+                        }
+                    } else {
+                        chain.push(...geom);
+                    }
+                }
+            });
+
+            if (!matchedAny || chain.length < 2) {
+                return null;
+            }
+
+            let startProj = projectPointOnChain(startCoord, chain);
+            let endProj = projectPointOnChain(endCoord, chain);
+
+            if (startProj.totalDist > endProj.totalDist) {
+                chain.reverse();
+                startProj = projectPointOnChain(startCoord, chain);
+                endProj = projectPointOnChain(endCoord, chain);
+            }
+
+            let subChain = [startCoord];
+            for (let i = startProj.segIdx + 1; i <= endProj.segIdx; i++) {
+                const pt = chain[i];
+                if (Math.hypot(pt[0]-startCoord[0], pt[1]-startCoord[1]) > 1e-2 &&
+                    Math.hypot(pt[0]-endCoord[0], pt[1]-endCoord[1]) > 1e-2) {
+                    subChain.push(pt);
+                }
+            }
+            subChain.push(endCoord);
+
+            return subChain;
+        }
+
+        function distributeTimeByDistance(subChain, tStart, tEnd, startSpeed, endSpeed, edgeId, masterList) {
+            if (subChain.length < 2) return;
+            
+            let totalDist = 0;
+            let segDists = [];
+            for (let i = 0; i < subChain.length - 1; i++) {
+                let d = Math.hypot(subChain[i+1][0] - subChain[i][0], subChain[i+1][1] - subChain[i][1]);
+                segDists.push(d);
+                totalDist += d;
+            }
+
+            let currentDist = 0;
+            for (let i = 1; i < subChain.length; i++) {
+                currentDist += segDists[i-1];
+                let fraction = totalDist === 0 ? 1 : (currentDist / totalDist);
+                
+                let t = tStart + (tEnd - tStart) * fraction;
+                let s = startSpeed + (endSpeed - startSpeed) * fraction;
+                
+                masterList.push({
+                    coord: subChain[i], 
+                    timeOffset: t,
+                    speed: s,
+                    edgeId: edgeId || "Path",
+                    isStationaryLong: false
+                });
+            }
+        }
+
+        // ============================================================
+        // PARSING ENGINES (EXCEL & GRAPHML)
+        // ============================================================
+        function parseGraphML(xmlText) {
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+            if (xmlDoc.querySelector("parsererror")) return {};
+
+            const nodes = {};
+            const parsedEdges = {};
+            const keyMap = {};
+            
+            xmlDoc.querySelectorAll("key").forEach(k => {
+                const id = k.getAttribute("id");
+                const attrName = k.getAttribute("attr.name");
+                if (id && attrName) keyMap[id] = attrName.toLowerCase().trim();
+            });
+
+            xmlDoc.querySelectorAll("node").forEach(node => {
+                const id = node.getAttribute("id");
+                let lat = null, lon = null;
+                node.querySelectorAll("data").forEach(data => {
+                    const attrName = keyMap[data.getAttribute("key")] || data.getAttribute("key");
+                    if (attrName === "lat") lat = parseFloat(data.textContent);
+                    if (attrName === "lon") lon = parseFloat(data.textContent);
+                });
+                if (lat !== null && lon !== null) nodes[id] = [lon, lat];
+            });
+
+            networkVectorSource.clear();
+            const networkFeatures = [];
+
+            xmlDoc.querySelectorAll("edge").forEach(edge => {
+                const u = edge.getAttribute("source");
+                const v = edge.getAttribute("target");
+                const xmlTagId = edge.getAttribute("id");
+                let explicitId = null, osmid = null, geometryWkt = null;
+                
+                // Initialize metric holders
+                let maxSpeed = null, avgSpeed = null, traversalCount = null;
+
+                edge.querySelectorAll("data").forEach(data => {
+                    const attrName = keyMap[data.getAttribute("key")] || data.getAttribute("key");
+                    if (attrName === "id") explicitId = data.textContent.trim();
+                    if (attrName === "osmid") osmid = data.textContent.trim();
+                    if (attrName === "geometry") geometryWkt = data.textContent.trim();
+                    
+                    // Capture metrics from keys mapped to lowercase attributes
+                    if (attrName === "max_speed_kmh") maxSpeed = data.textContent.trim();
+                    if (attrName === "average_speed_kmh") avgSpeed = data.textContent.trim();
+                    if (attrName === "traversal_count") traversalCount = data.textContent.trim();
+                });
+
+                if (nodes[u] && nodes[v]) {
+                    let coordinates;
+                    if (geometryWkt) {
+                        const parsedPts = parseWktLineString(geometryWkt);
+                        coordinates = parsedPts ? parsedPts.map(pt => ol.proj.fromLonLat(pt)) : [ol.proj.fromLonLat(nodes[u]), ol.proj.fromLonLat(nodes[v])];
+                    } else {
+                        coordinates = [ol.proj.fromLonLat(nodes[u]), ol.proj.fromLonLat(nodes[v])];
+                    }
+
+                    if (explicitId) parsedEdges[String(explicitId)] = coordinates;
+                    if (xmlTagId) parsedEdges[String(xmlTagId)] = coordinates;
+                    if (osmid) {
+                        const discreteIds = osmid.match(/\d+/g);
+                        if (discreteIds) {
+                            discreteIds.forEach(id => { parsedEdges[String(id)] = coordinates; });
+                        } else {
+                            parsedEdges[String(osmid)] = coordinates;
+                        }
+                    }
+
+                    // Build Feature with explicitly attached metadata properties
+                    networkFeatures.push(new ol.Feature({
+                        geometry: new ol.geom.LineString(coordinates),
+                        edge_id: explicitId || xmlTagId || osmid,
+                        max_speed: maxSpeed,
+                        avg_speed: avgSpeed,
+                        traversal_count: traversalCount
+                    }));
+                }
+            });
+
+            if (networkFeatures.length > 0) {
+                networkVectorSource.addFeatures(networkFeatures);
+                map.getView().fit(networkVectorSource.getExtent(), { padding: [50, 50, 50, 50], maxZoom: 15 });
+            }
+            return parsedEdges;
+        }
+
+        function processTrackingData(rows) {
+            if (!rows || rows.length === 0) return;
+
+            rows = rows.filter(row => {
+                if (row.is_unrealistic_speed === undefined || row.is_unrealistic_speed === null) return true;
+                const val = String(row.is_unrealistic_speed).toLowerCase().trim();
+                return !(val === 'true' || val === '1');
+            });
+
+            if (rows.length === 0) return;
+
+            if (Object.keys(networkEdges).length === 0) {
+                cachedXlsxRows = rows;
+                return; 
+            }
+
+            rows.forEach((row, idx) => {
+                let rawVal = row.Timestamp || row.timestamp;
+                let t = NaN;
+                if (rawVal instanceof Date) t = rawVal.getTime();
+                else if (typeof rawVal === 'number') t = rawVal > 0 && rawVal < 100000 ? Math.round((rawVal - 25569) * 86400 * 1000) : rawVal;
+                else if (rawVal) {
+                    t = new Date(rawVal).getTime();
+                    if (isNaN(t) && !isNaN(Number(rawVal))) {
+                        let num = Number(rawVal);
+                        t = num > 0 && num < 100000 ? Math.round((num - 25569) * 86400 * 1000) : num;
+                    }
+                }
+                row._cleanTime = isNaN(t) ? idx * 1000 : t; 
+            });
+
+            rows.sort((a, b) => a._cleanTime - b._cleanTime);
+            
+            let masterRouteCoords = [];
+            const startTime = rows[0]._cleanTime;
+            baseAbsoluteTimestamp = startTime;
+            
+            const initialPos = ol.proj.fromLonLat([parseFloat(rows[0].snapped_lon || rows[0].Longitude), parseFloat(rows[0].snapped_lat || rows[0].Latitude)]);
+            masterRouteCoords.push({
+                coord: initialPos,
+                timeOffset: 0,
+                speed: parseFloat(rows[0].speed_snapped_kmh || 0),
+                edgeId: rows[0].matched_edge_id || "Trip Origin",
+                isStationaryLong: false
+            });
+
+            for (let i = 1; i < rows.length; i++) {
+                const prevRow = rows[i-1];
+                const currRow = rows[i];
+                
+                const tPrev = prevRow._cleanTime - startTime;
+                const tCurr = currRow._cleanTime - startTime;
+                
+                const pPrev = ol.proj.fromLonLat([parseFloat(prevRow.snapped_lon || prevRow.Longitude), parseFloat(prevRow.snapped_lat || prevRow.Latitude)]);
+                const pCurr = ol.proj.fromLonLat([parseFloat(currRow.snapped_lon || currRow.Longitude), parseFloat(currRow.snapped_lat || currRow.Latitude)]);
+                
+                let sPrev = parseFloat(prevRow.speed_snapped_kmh || 0);
+                let sCurr = parseFloat(currRow.speed_snapped_kmh || 0);
+                
+                let effectiveStartT = tPrev;
+                let isStationary = (tCurr - tPrev > 60000);
+                
+                if (isStationary) {
+                     if (masterRouteCoords.length > 0) masterRouteCoords[masterRouteCoords.length - 1].isStationaryLong = true;
+                     effectiveStartT = tCurr - 1000;
+                     masterRouteCoords.push({
+                         coord: pPrev,
+                         timeOffset: effectiveStartT,
+                         speed: 0,
+                         edgeId: "Stationary Break",
+                         isStationaryLong: false 
+                     });
+                }
+                
+                let edges = [];
+                try { if (currRow.traversed_edge_ids_json) edges = JSON.parse(currRow.traversed_edge_ids_json); } catch(e){}
+                
+                const rlv = currRow.route_link_valid;
+                const isRouteValid = (rlv === true || String(rlv).toLowerCase().trim() === 'true' || String(rlv).trim() === '1');
+
+                let subChain = isRouteValid ? buildContinuousChain(edges, pPrev, pCurr, networkEdges) : null;
+                
+                if (subChain === null) {
+                    masterRouteCoords.push({
+                        coord: pPrev,
+                        timeOffset: tCurr - 1, 
+                        speed: 0,
+                        edgeId: isRouteValid ? "No Route Match - Stationary" : "Invalid Route Link - Stationary",
+                        isStationaryLong: false
+                    });
+                    masterRouteCoords.push({
+                        coord: pCurr,
+                        timeOffset: tCurr,
+                        speed: sCurr,
+                        edgeId: currRow.matched_edge_id || (isRouteValid ? "Route Gap Teleport" : "Invalid Route Teleport"),
+                        isStationaryLong: false
+                    });
+                } else {
+                    distributeTimeByDistance(subChain, effectiveStartT, tCurr, sPrev, sCurr, currRow.matched_edge_id, masterRouteCoords);
+                }
+            }
+
+            masterRouteCoords.sort((a, b) => a.timeOffset - b.timeOffset);
+            chronologicalPath = masterRouteCoords.filter((item, pos, ary) => !pos || item.timeOffset > ary[pos - 1].timeOffset);
+            
+            if (chronologicalPath.length === 0) return;
+            totalDurationMs = chronologicalPath[chronologicalPath.length - 1].timeOffset;
+            
+            animationCurrentTime = 0; 
+            timeline.value = 0;
+            timeline.max = totalDurationMs;
+            timeline.disabled = false;
+            
+            btnPlayPause.disabled = false;
+            btnSkipNext.disabled = false;
+            btnSkipHour.disabled = false;
+            isPlaying = false;
+            btnPlayPause.textContent = "Play"; 
+            
+            map.getView().setCenter(chronologicalPath[0].coord);
+            map.getView().setZoom(16);
+            updateAgentPosition(0);
+        }
+
+        // ============================================================
+        // ANIMATION RUNTIME ENGINE
+        // ============================================================
+        function updateAgentPosition(currentTimeOffset) {
+            if (chronologicalPath.length === 0) return;
+            if (currentTimeOffset > totalDurationMs) currentTimeOffset = totalDurationMs;
+            timeline.value = currentTimeOffset;
+
+            let index = 0;
+            while (index < chronologicalPath.length - 1 && chronologicalPath[index + 1].timeOffset < currentTimeOffset) {
+                index++;
+            }
+
+            let activePoint = chronologicalPath[index];
+            let snapCoord = activePoint.coord;
+
+            agentFeature.getGeometry().setCoordinates(snapCoord);
+
+            telTime.textContent = formatDateTime(baseAbsoluteTimestamp + currentTimeOffset);
+            const isStationary = activePoint.isStationaryLong || activePoint.edgeId.includes("Stationary");
+            const displaySpeed = isStationary ? 0 : activePoint.speed;
+
+            mapStationaryBanner.style.display = isStationary ? "block" : "none";
+        }
+
+        function animationStep(timestamp) {
+            if (!isPlaying) return;
+            if (!lastTimestamp) lastTimestamp = timestamp;
+            const delta = timestamp - lastTimestamp;
+            lastTimestamp = timestamp;
+
+            // 1. Evaluate Wall-Clock Clock Freeze for Stationary Breaks
+            if (isWaitingAtStationary) {
+                stationaryPauseTimer += delta;
+                if (stationaryPauseTimer >= 500) { // 0.5s real animation window completed
+                    isWaitingAtStationary = false;
+                    animationCurrentTime = stationaryTargetTime; // Teleport clock to end of rest period
+                    stationaryPauseTimer = 0;
+                } else {
+                    updateAgentPosition(animationCurrentTime);
+                    animationFrameId = requestAnimationFrame(animationStep);
+                    return;
+                }
+            }
+
+            // 2. Normal Timeline Clock Progression
+            animationCurrentTime += delta * parseFloat(speedSelect.value);
+
+            if (animationCurrentTime >= totalDurationMs) {
+                animationCurrentTime = totalDurationMs;
+                updateAgentPosition(animationCurrentTime);
+                pausePlayback();
+                animationCurrentTime = 0; 
+                return;
+            }
+
+            // 3. Evaluate if we arrived at a point flagged with a long stationary break
+            let index = 0;
+            while (index < chronologicalPath.length - 1 && chronologicalPath[index + 1].timeOffset <= animationCurrentTime) {
+                index++;
+            }
+            
+            let currentPt = chronologicalPath[index];
+            if (currentPt && currentPt.isStationaryLong && index < chronologicalPath.length - 1) {
+                let nextPt = chronologicalPath[index + 1];
+                // Trigger intercept loop if we are within the stationary window timeframe
+                if (!isWaitingAtStationary && animationCurrentTime < nextPt.timeOffset) {
+                    isWaitingAtStationary = true;
+                    stationaryPauseTimer = 0;
+                    stationaryTargetTime = nextPt.timeOffset;
+                    animationCurrentTime = currentPt.timeOffset; // Lock simulation position onto start coordinates
+                }
+            }
+
+            updateAgentPosition(animationCurrentTime);
+            animationFrameId = requestAnimationFrame(animationStep);
+        }
+
+        function startPlayback() {
+            if (chronologicalPath.length === 0) return;
+            isPlaying = true;
+            btnPlayPause.textContent = "Pause";
+            lastTimestamp = null; 
+            animationFrameId = requestAnimationFrame(animationStep);
+        }
+
+        function pausePlayback() {
+            isPlaying = false;
+            btnPlayPause.textContent = "Play";
+            lastTimestamp = null;
+            isWaitingAtStationary = false; 
+            stationaryPauseTimer = 0;
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+        }
+
+        // ============================================================
+        // HOVER TOOLTIP ENGINE FOR EDGES
+        // ============================================================
+        const tooltip = document.getElementById('edgeTooltip');
+
+        map.on('pointermove', function (evt) {
+            if (evt.dragging) {
+                tooltip.style.display = 'none';
+                return;
+            }
+
+            // Look for road edge features under the pixel cursor
+            let hoveredFeature = null;
+            map.forEachFeatureAtPixel(evt.pixel, function (feature) {
+                if (feature.get('edge_id') !== undefined) {
+                    hoveredFeature = feature;
+                    return true; // Break iteration loop
+                }
+            });
+
+            // If a valid edge feature is identified, construct the popup container text
+            if (hoveredFeature) {
+                const edgeId = hoveredFeature.get('edge_id');
+                const avgSpeed = hoveredFeature.get('avg_speed');
+                const traversalCount = hoveredFeature.get('traversal_count');
+
+                // Fallback rendering handles segments with missing entries nicely
+                const avgSpeedStr = avgSpeed && !isNaN(parseFloat(avgSpeed)) ? `${parseFloat(avgSpeed).toFixed(1)} km/h` : '0.0 km/h';
+                const countStr = traversalCount !== null && traversalCount !== undefined ? traversalCount : '0';
+
+                tooltip.innerHTML = `
+                    <div style="font-weight: bold; border-bottom: 1px solid #6c757d; margin-bottom: 5px; padding-bottom: 2px; color: #007bff; font-size: 13px;">Edge Metrics</div>
+                    <strong>ID:</strong> ${edgeId}<br/>
+                    <strong>Avg Speed:</strong> ${avgSpeedStr}<br/>
+                    <strong>Traversals:</strong> ${countStr} times
+                `;
+                
+                // Track mouse movement coordinates dynamically using absolute window pixels
+                tooltip.style.left = (evt.originalEvent.pageX + 15) + 'px';
+                tooltip.style.top = (evt.originalEvent.pageY + 15) + 'px';
+                tooltip.style.display = 'block';
+                map.getTargetElement().style.cursor = 'pointer';
+            } else {
+                tooltip.style.display = 'none';
+                map.getTargetElement().style.cursor = '';
+            }
+        });
+
+        // ============================================================
+        // EVENT LISTENERS
+        // ============================================================
+        btnPlayPause.addEventListener('click', () => {
+            if (isPlaying) pausePlayback();
+            else { if (animationCurrentTime >= totalDurationMs) animationCurrentTime = 0; startPlayback(); }
+        });
+
+        btnSkipNext.addEventListener('click', () => {
+            if (chronologicalPath.length === 0) return;
+            let index = 0;
+            while (index < chronologicalPath.length - 1 && chronologicalPath[index].timeOffset <= animationCurrentTime) {
+                index++;
+            }
+            animationCurrentTime = chronologicalPath[index].timeOffset;
+            lastTimestamp = null;
+            updateAgentPosition(animationCurrentTime);
+        });
+
+        btnSkipHour.addEventListener('click', () => {
+            if (chronologicalPath.length === 0) return;
+            animationCurrentTime = Math.min(animationCurrentTime + 3600000, totalDurationMs);
+            lastTimestamp = null;
+            updateAgentPosition(animationCurrentTime);
+        });
+
+        timeline.addEventListener('input', (e) => {
+            animationCurrentTime = parseFloat(e.target.value);
+            lastTimestamp = null; 
+            updateAgentPosition(animationCurrentTime);
+        });
+
+        document.getElementById('excelFile').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const workbook = XLSX.read(new Uint8Array(evt.target.result), { type: 'array', cellDates: true });
+                processTrackingData(XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]])); 
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        document.getElementById('graphmlFile').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                networkEdges = parseGraphML(evt.target.result);
+                if (cachedXlsxRows) { processTrackingData(cachedXlsxRows); cachedXlsxRows = null; }
+            };
+            reader.readAsText(file);
+        });
+    </script>
+</body>
+</html>

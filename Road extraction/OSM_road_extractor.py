@@ -39,7 +39,7 @@ def get_roads(geojson_path="area.geojson", output_path="."):
     print("Downloading road network from OSMnx...")
     G = ox.graph_from_polygon(
         polygon,
-        network_type="drive",   # or "all_private" if you want all roads
+        network_type="all",   # or "all_private" if you want all roads
         # simplify=True
         simplify=False
     )
@@ -47,23 +47,23 @@ def get_roads(geojson_path="area.geojson", output_path="."):
     # -------------------------------------------------------------
     # 2.1 Filter out disallowed roads (speed = 0)
     # -------------------------------------------------------------
-    print("Filtering roads based on ROAD_SPEEDS...")
 
     edges_to_remove = []
 
-    for u, v, key, data in G.edges(keys=True, data=True):
-        highway = data.get("highway")
+    # print("Filtering roads based on ROAD_SPEEDS...")
+    # for u, v, key, data in G.edges(keys=True, data=True):
+    #     highway = data.get("highway")
 
-        if not is_allowed_highway(highway, ROAD_SPEEDS):
-            edges_to_remove.append((u, v, key))
+    #     if not is_allowed_highway(highway, ROAD_SPEEDS):
+    #         edges_to_remove.append((u, v, key))
 
-    G.remove_edges_from(edges_to_remove)
+    # G.remove_edges_from(edges_to_remove)
 
     # Remove isolated nodes
     isolated_nodes = [node for node, degree in dict(G.degree()).items() if degree == 0]
     G.remove_nodes_from(isolated_nodes)
 
-    print(f"Removed {len(edges_to_remove)} edges with speed = 0")
+    # print(f"Removed {len(edges_to_remove)} edges with speed = 0")
 
     # -------------------------------------------------------------
     # 2.2 Keep only largest strongly connected component

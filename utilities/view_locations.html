@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPS Track & Network Viewer</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v8.2.0/ol.css">
+
+    <style>
+        body { background: #f5f5f5; }
+        #map {
+            width: 100%;
+            height: 80vh;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #ccc;
+            position: relative;
+        }
+        .toolbar {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        .legend-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .legend-line {
+            width: 20px;
+            height: 4px;
+            display: inline-block;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        .raw-dot { background: red; }
+        .clean-dot { background: blue; }
+        .unmatched-dot { background: purple; }
+        .unrealistic-dot { background: orange; width: 16px; height: 16px; }
+        .road-line {
+            background: #22c55e;
+            width: 20px;
+            height: 4px;
+            display: inline-block;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        .patch-line {
+            background: #f97316;
+            width: 20px;
+            height: 4px;
+            display: inline-block;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        /* Style rule setup for the hover popup callout window */
+        .ol-tooltip {
+            position: absolute;
+            background: rgba(33, 37, 41, 0.95);
+            color: white;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+            pointer-events: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: opacity 0.15s ease;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid p-4">
+    <h2 class="mb-4">GPS Track & Network Viewer</h2>
+
+    <div class="toolbar">
+        <div class="row g-3 align-items-center">
+            <div class="col-auto">
+                <label class="form-label fw-bold">Raw XLSX</label>
+                <input type="file" id="rawFile" class="form-control" accept=".xlsx">
+            </div>
+            <div class="col-auto">
+                <label class="form-label fw-bold">Clean XLSX</label>
+                <input type="file" id="cleanFile" class="form-control" accept=".xlsx">
+            </div>
+            <div class="col-auto">
+                <label class="form-label fw-bold">Road Network GraphML</label>
+                <input type="file" id="graphmlFile" class="form-control" accept=".graphml,.xml">
+            </div>
+            <div class="col-auto d-flex align-items-end mt-auto pt-4">
+                <button class="btn btn-primary" onclick="loadFiles()">Load Data</button>
+            </div>
+            <div class="col-auto d-flex align-items-end mt-auto pt-4">
+                <button id="toggleRaw" class="btn btn-outline-danger active" onclick="toggleLayer('raw')">Toggle Raw</button>
+            </div>
+            <div class="col-auto d-flex align-items-end mt-auto pt-4">
+                <button id="toggleClean" class="btn btn-outline-primary active" onclick="toggleLayer('clean')">Toggle Clean</button>
+            </div>
+            <div class="col-auto d-flex align-items-end mt-auto pt-4">
+                <button id="toggleCoords"
+                        class="btn btn-outline-info active"
+                        onclick="toggleCoordinateSource()">
+                    Showing Snapped Coordinates
+                </button>
+            </div>
+            <div class="col-auto d-flex align-items-end mt-auto pt-4">
+                <button id="toggleUnmatchedOnly" class="btn btn-outline-secondary" onclick="toggleUnmatchedFilter()">Show Unmatched Only</button>
+            </div>
+            <div class="col-auto d-flex align-items-end mt-auto pt-4">
+                <button id="toggleRoads" class="btn btn-outline-success active" onclick="toggleLayer('roads')">Toggle Roads</button>
+            </div>
+            <div class="col-auto d-flex align-items-end mt-auto pt-4">
+                <button id="toggleRoutePatches" class="btn btn-outline-warning active" onclick="toggleRoutePatchesFilter()">Toggle Route Patches</button>
+            </div>
+        </div>
+
+        <div class="mt-3">
+            <span class="me-3"><span class="legend-dot raw-dot"></span>Raw Data</span>
+            <span class="me-3"><span class="legend-dot clean-dot"></span>Clean Data (Matched)</span>
+            <span class="me-3"><span class="legend-dot unmatched-dot"></span>Clean Data (No Match)</span>
+            <span class="me-3"><span class="legend-dot unrealistic-dot"></span>Unrealistic Speed Warning</span>
+            <span class="me-3"><span class="road-line"></span> Track Network</span>
+            <span class="me-3"><span class="patch-line"></span> Route Patch</span>
+        </div>
+    </div>
+
+    <div id="map">
+        <div id="tooltip" class="ol-tooltip" style="display: none;"></div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/ol@v8.2.0/dist/ol.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<script>
+let map;
+let rawLayer, cleanLayer, roadsLayer;
+
+let rawSource = new ol.source.Vector();
+let cleanSource = new ol.source.Vector();
+let roadsSource = new ol.source.Vector();
+
+let showUnmatchedOnly = false;
+let hideRoutePatches = false;
+
+let showSnappedCoordinates = true;
+
+const rawPointStyle = new ol.style.Style({
+    image: new ol.style.Circle({ radius: 3, fill: new ol.style.Fill({ color: 'red' }) })
+});
+const rawLineStyle = new ol.style.Style({
+    stroke: new ol.style.Stroke({ color: 'red', width: 2 })
+});
+
+const cleanMatchedPointStyle = new ol.style.Style({
+    image: new ol.style.Circle({ radius: 3, fill: new ol.style.Fill({ color: 'blue' }) })
+});
+const cleanUnmatchedPointStyle = new ol.style.Style({
+    image: new ol.style.Circle({ radius: 3, fill: new ol.style.Fill({ color: 'purple' }) })
+});
+const cleanLineStyle = new ol.style.Style({
+    stroke: new ol.style.Stroke({ color: 'blue', width: 2 })
+});
+
+const unrealisticPointStyle = new ol.style.Style({
+    image: new ol.style.Circle({ 
+        radius: 7, 
+        fill: new ol.style.Fill({ color: 'orange' }),
+        stroke: new ol.style.Stroke({ color: 'white', width: 1.5 })
+    }),
+    zIndex: 999 
+});
+
+const roadNetworkStyle = new ol.style.Style({
+    stroke: new ol.style.Stroke({ color: '#22c55e', width: 4 })
+});
+const routePatchStyle = new ol.style.Style({
+    stroke: new ol.style.Stroke({ color: '#f97316', width: 4 })
+});
+
+function initMap() {
+    rawLayer = new ol.layer.Vector({
+        source: rawSource,
+        style: function(feature) {
+            return feature.getGeometry().getType() === 'Point' ? rawPointStyle : rawLineStyle;
+        }
+    });
+
+    cleanLayer = new ol.layer.Vector({
+        source: cleanSource,
+        style: function(feature) {
+            const geomType = feature.getGeometry().getType();
+            const isMatch = feature.get('match');
+            const isUnrealistic = feature.get('is_unrealistic_speed');
+            
+            if (showUnmatchedOnly) {
+                if (geomType !== 'Point' || isMatch !== false) return null; 
+            }
+
+            if (geomType === 'Point') {
+                if (isUnrealistic === true) {
+                    return unrealisticPointStyle;
+                }
+                return (isMatch === false) ? cleanUnmatchedPointStyle : cleanMatchedPointStyle;
+            } else {
+                return cleanLineStyle;
+            }
+        }
+    });
+
+    roadsLayer = new ol.layer.Vector({
+        source: roadsSource,
+        style: function(feature) {
+            const d2Value = String(feature.get('d2') || '');
+            const isRoutePatch = d2Value.endsWith('route_patch');
+
+            if (hideRoutePatches && isRoutePatch) return null;
+            return isRoutePatch ? routePatchStyle : roadNetworkStyle;
+        }
+    });
+
+    map = new ol.Map({
+        target: 'map',
+        layers: [
+            new ol.layer.Tile({ source: new ol.source.OSM() }),
+            roadsLayer,
+            rawLayer,
+            cleanLayer
+        ],
+        view: new ol.View({
+            center: ol.proj.fromLonLat([0,0]),
+            zoom: 2
+        } )
+    });
+
+    // Initialize overlay anchor context matching
+    const tooltipEl = document.getElementById('tooltip');
+    const tooltipOverlay = new ol.Overlay({
+        element: tooltipEl,
+        offset: [0, -12], // Adjust position above the coordinate anchor node
+        positioning: 'bottom-center'
+    });
+    map.addOverlay(tooltipOverlay);
+
+    // Dynamic mouse tracker pointer move function
+    map.on('pointermove', function(evt) {
+        if (evt.dragging) {
+            tooltipEl.style.display = 'none';
+            tooltipOverlay.setPosition(undefined);
+            return;
+        }
+
+        const pixel = map.getEventPixel(evt.originalEvent);
+        let targetFeature = null;
+
+        // Perform spatial intersection checks across target vectors
+        map.forEachFeatureAtPixel(pixel, function(feature, layer) {
+            if (layer === cleanLayer && feature.getGeometry().getType() === 'Point') {
+                targetFeature = feature;
+                return true; // Break cross iteration logic loop early on match found
+            }
+        });
+
+        if (targetFeature) {
+            const speedVal = targetFeature.get('speed_snapped_kmh');
+            
+            if (speedVal !== undefined && speedVal !== null && !isNaN(speedVal)) {
+                const cleanSpeedInt = Math.round(parseFloat(speedVal));
+                tooltipEl.innerHTML = `Speed: ${cleanSpeedInt} km/h`;
+                tooltipEl.style.display = 'block';
+                tooltipOverlay.setPosition(evt.coordinate);
+                map.getTargetElement().style.cursor = 'pointer';
+            } else {
+                tooltipEl.style.display = 'none';
+                tooltipOverlay.setPosition(undefined);
+                map.getTargetElement().style.cursor = '';
+            }
+        } else {
+            tooltipEl.style.display = 'none';
+            tooltipOverlay.setPosition(undefined);
+            map.getTargetElement().style.cursor = '';
+        }
+    });
+}
+
+async function loadFiles() {
+    rawSource.clear();
+    cleanSource.clear();
+    roadsSource.clear();
+
+    const rawFile = document.getElementById('rawFile').files[0];
+    const cleanFile = document.getElementById('cleanFile').files[0];
+    const graphmlFile = document.getElementById('graphmlFile').files[0];
+
+    if (rawFile) {
+        const rawData = await readXlsx(rawFile);
+        plotTrackOptimized(rawData, rawSource);
+    }
+
+    if (cleanFile) {
+        const cleanData = await readXlsx(cleanFile);
+        plotTrackOptimized(cleanData, cleanSource);
+    }
+
+    if (graphmlFile) {
+        const graphmlText = await readTextFile(graphmlFile);
+        parseAndPlotGraphML(graphmlText);
+    }
+
+    fitMap();
+}
+
+function readXlsx(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array', cellDates: true, dense: true });
+            const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+            resolve(json);
+        };
+        reader.onerror = reject;
+        reader.readAsArrayBuffer(file);
+    });
+}
+
+function readTextFile(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.onerror = reject;
+        reader.readAsText(file);
+    });
+}
+
+function parseAndPlotGraphML(xmlText) {
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+    const nodes = {};
+    const nodeElements = xmlDoc.getElementsByTagName("node");
+    
+    let latAttr = "lat", lonAttr = "lon", d2Attr = "d2";
+    const keys = xmlDoc.getElementsByTagName("key");
+    for (let i = 0; i < keys.length; i++) {
+        const attrName = keys[i].getAttribute("attr.name");
+        const id = keys[i].getAttribute("id");
+        if (["lat", "y", "latitude", "Latitude"].includes(attrName)) latAttr = id;
+        if (["lon", "x", "longitude", "Longitude"].includes(attrName)) lonAttr = id;
+        if (attrName === "d2") d2Attr = id; 
+    }
+
+    for (let i = 0; i < nodeElements.length; i++) {
+        const node = nodeElements[i];
+        const id = node.getAttribute("id");
+        let lat = null, lon = null;
+
+        if (node.hasAttribute("lat")) lat = parseFloat(node.getAttribute("lat"));
+        if (node.hasAttribute("lon")) lon = parseFloat(node.getAttribute("lon"));
+        if (node.hasAttribute("y")) lat = parseFloat(node.getAttribute("y"));
+        if (node.hasAttribute("x")) lon = parseFloat(node.getAttribute("x"));
+
+        const dataTags = node.getElementsByTagName("data");
+        for (let j = 0; j < dataTags.length; j++) {
+            const key = dataTags[j].getAttribute("key");
+            if (key === latAttr) lat = parseFloat(dataTags[j].textContent);
+            if (key === lonAttr) lon = parseFloat(dataTags[j].textContent);
+        }
+        if (lat !== null && lon !== null) nodes[id] = [lon, lat];
+    }
+
+    const edgeFeatures = [];
+    const edgeElements = xmlDoc.getElementsByTagName("edge");
+
+    for (let i = 0; i < edgeElements.length; i++) {
+        const edge = edgeElements[i];
+        const sourceId = edge.getAttribute("source");
+        const targetId = edge.getAttribute("target");
+        let lineCoords = [];
+
+        const dataTags = edge.getElementsByTagName("data");
+        let wktGeometry = null, speed = 0, d2Value = "";
+
+        for (let j = 0; j < dataTags.length; j++) {
+            const val = dataTags[j].textContent;
+            const currentKey = dataTags[j].getAttribute("key");
+            
+            if (val.toUpperCase().includes("LINESTRING")) wktGeometry = val;
+            if (["speed_kph", "speed"].includes(currentKey)) speed = parseFloat(val);
+            if (currentKey === d2Attr || currentKey === "d2") d2Value = val;
+        }
+
+        if (wktGeometry) {
+            const match = wktGeometry.match(/\(([^)]+)\)/);
+            if (match && match[1]) {
+                const pairs = match[1].split(',');
+                for (let k = 0; k < pairs.length; k++) {
+                    const parts = pairs[k].trim().split(/\s+/);
+                    if (parts.length >= 2) {
+                        lineCoords.push(ol.proj.fromLonLat([parseFloat(parts[0]), parseFloat(parts[1])]));
+                    }
+                }
+            }
+        } else if (nodes[sourceId] && nodes[targetId]) {
+            lineCoords.push(ol.proj.fromLonLat(nodes[sourceId]));
+            lineCoords.push(ol.proj.fromLonLat(nodes[targetId]));
+        }
+
+        if (lineCoords.length >= 2) {
+            edgeFeatures.push(new ol.Feature({
+                geometry: new ol.geom.LineString(lineCoords),
+                speed: speed,
+                d2: d2Value
+            }));
+        }
+    }
+    roadsSource.addFeatures(edgeFeatures);
+}
+
+function plotTrackOptimized(data, source) {
+    const features = [];
+    const pointsList = [];
+
+    for (let i = 0; i < data.length; i++) {
+        const row = data[i];
+        
+        let lat, lon;
+
+        const isCleanLayer = (source === cleanSource);
+
+        if (isCleanLayer && showSnappedCoordinates) {
+            lat = row.snapped_lat ?? row.Latitude ?? row.Mapped_Latitude;
+            lon = row.snapped_log ?? row.snapped_lon ?? row.Longitude ?? row.Mapped_Longitude;
+        } else {
+            lat = row.Latitude ?? row.Mapped_Latitude ?? row.snapped_lat;
+            lon = row.Longitude ?? row.Mapped_Longitude ??
+                row.snapped_lon ?? row.snapped_log;
+        }
+
+        if (lat == null || lon == null) continue;
+        if (Math.abs(lat) < 0.001 && Math.abs(lon) < 0.001) continue; 
+
+        const coord = ol.proj.fromLonLat([lon, lat]);
+        let parsedTime = null;
+
+        if (row.Timestamp) {
+            if (row.Timestamp instanceof Date) {
+                parsedTime = row.Timestamp.getTime();
+            } else {
+                let timeStr = String(row.Timestamp).trim();
+                if (timeStr.includes(':') && !timeStr.includes('-') && !timeStr.includes('/')) {
+                    timeStr = '2026-01-01T' + timeStr;
+                }
+                parsedTime = Date.parse(timeStr);
+            }
+        }
+
+        if (parsedTime && !isNaN(parsedTime)) {
+            const isUnrealistic = row.is_unrealistic_speed === true || 
+                                  String(row.is_unrealistic_speed).toLowerCase() === 'true';
+
+            pointsList.push({
+                coord: coord,
+                time: parsedTime,
+                match: row.Match !== undefined ? row.Match : row.match,
+                timestamp: row.Timestamp,
+                lon: lon,
+                lat: lat,
+                is_unrealistic_speed: isUnrealistic,
+                // MAP ATTR FIX: Retain speed parameters down to tracking arrays
+                speed_snapped_kmh: row.speed_snapped_kmh 
+            });
+        }
+    }
+
+    pointsList.sort((a, b) => a.time - b.time);
+
+    const continuousLines = [];
+    let activeLineSegment = [];
+
+    for (let i = 0; i < pointsList.length; i++) {
+        const pt = pointsList[i];
+
+        features.push(new ol.Feature({
+            geometry: new ol.geom.Point(pt.coord),
+            timestamp: pt.timestamp,
+            match: pt.match,
+            is_unrealistic_speed: pt.is_unrealistic_speed,
+            // MAP ATTR FIX: Inject property attributes directly inside individual points
+            speed_snapped_kmh: pt.speed_snapped_kmh 
+        }));
+
+        if (i < pointsList.length - 1) {
+            const nextPt = pointsList[i + 1];
+            const timeDiffSeconds = Math.abs(nextPt.time - pt.time) / 1000;
+
+            if (timeDiffSeconds <= 30) {
+                const dLat = nextPt.lat - pt.lat;
+                const dLon = nextPt.lon - pt.lon;
+                
+                if ((dLat * dLat + dLon * dLon) < 0.000225) { 
+                    if (activeLineSegment.length === 0) {
+                        activeLineSegment.push(pt.coord);
+                    }
+                    activeLineSegment.push(nextPt.coord);
+                    continue;
+                }
+            }
+        }
+
+        if (activeLineSegment.length >= 2) {
+            continuousLines.push(activeLineSegment);
+        }
+        activeLineSegment = [];
+    }
+
+    if (activeLineSegment.length >= 2) {
+        continuousLines.push(activeLineSegment);
+    }
+
+    if (continuousLines.length > 0) {
+        features.push(new ol.Feature({
+            geometry: new ol.geom.MultiLineString(continuousLines)
+        }));
+    }
+
+    source.addFeatures(features);
+}
+
+function fitMap() {
+    const extent = ol.extent.createEmpty();
+    ol.extent.extend(extent, rawSource.getExtent());
+    ol.extent.extend(extent, cleanSource.getExtent());
+    ol.extent.extend(extent, roadsSource.getExtent());
+
+    if (!ol.extent.isEmpty(extent)) {
+        map.getView().fit(extent, { padding: [40,40,40,40], maxZoom: 18 });
+    }
+}
+
+function toggleCoordinateSource() {
+    showSnappedCoordinates = !showSnappedCoordinates;
+
+    const btn = document.getElementById('toggleCoords');
+
+    if (showSnappedCoordinates) {
+        btn.textContent = 'Showing Snapped Coordinates';
+    } else {
+        btn.textContent = 'Showing Original Coordinates';
+    }
+
+    // Reload clean layer styling/data
+    loadCleanFileOnly();
+}
+
+async function loadCleanFileOnly() {
+    const cleanFile = document.getElementById('cleanFile').files[0];
+
+    if (!cleanFile) return;
+
+    cleanSource.clear();
+
+    const cleanData = await readXlsx(cleanFile);
+    plotTrackOptimized(cleanData, cleanSource);
+
+    fitMap();
+}
+
+function toggleLayer(type) {
+    let layer, btnId;
+    if (type === 'raw') { layer = rawLayer; btnId = 'toggleRaw'; } 
+    else if (type === 'clean') { layer = cleanLayer; btnId = 'toggleClean'; } 
+    else { layer = roadsLayer; btnId = 'toggleRoads'; }
+
+    layer.setVisible(!layer.getVisible());
+    document.getElementById(btnId).classList.toggle('active');
+}
+
+function toggleUnmatchedFilter() {
+    showUnmatchedOnly = !showUnmatchedOnly;
+    const btn = document.getElementById('toggleUnmatchedOnly');
+    btn.classList.toggle('btn-outline-secondary');
+    btn.classList.toggle('active');
+    btn.classList.toggle('btn-danger'); 
+
+    cleanSource.changed();
+}
+
+function toggleRoutePatchesFilter() {
+    hideRoutePatches = !hideRoutePatches;
+    const btn = document.getElementById('toggleRoutePatches');
+    btn.classList.toggle('active');
+    roadsSource.changed();
+}
+
+initMap();
+</script>
+
+</body>
+</html>
