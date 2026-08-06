@@ -34,7 +34,7 @@
   },
   "swap_wait_sec": 600,
   "max_total_distance_m": 80000,
-  "buffer_distance": 12000,
+  "buffer_distance": 15000,
   "passenger_max_dist": 6000,
   "simulation_step_sec": 10
 }

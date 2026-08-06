@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" name="referrer" content="strict-origin-when-cross-origin">
+<title>Swap Station Viewer & Queue Animator</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@7.5.2/ol.css">
+<!-- SheetJS for parsing XLSX files -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+#controls { padding:10px; background:#f4f4f4; display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
+#map { flex: 1; width: 100%; }
+
+/* Custom Station Animation Modal Styling */
+.modal-dialog { max-width: 650px; }
+.post-box {
+  border: 2px dashed #0d6efd;
+  background-color: #e7f1ff;
+  border-radius: 6px;
+  min-height: 70px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  position: relative;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+.post-box.occupied {
+  border-style: solid;
+  border-color: #198754;
+  background-color: #d1e7dd;
+}
+.queue-box {
+  border: 2px dashed #ffc107;
+  background-color: #fff3cd;
+  border-radius: 6px;
+  min-height: 80px;
+  padding: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-content: flex-start;
+}
+.vehicle-badge {
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 12px;
+}
+</style>
+</head>
+<body>
+
+<div id="controls" class="container-fluid">
+  <label class="btn btn-outline-secondary btn-sm me-1" for="fileInput">Import Area</label>
+  <input type="file" id="fileInput" accept=".geojson,.json" style="display:none;">
+  <span id="areaStatus" class="badge bg-secondary me-2">Area: Not Loaded</span>
+  
+  <label class="btn btn-outline-primary btn-sm me-1" for="facilityInput">Import Swap Stations</label>
+  <input type="file" id="facilityInput" accept=".geojson,.json" style="display:none;">
+  <span id="stationsStatus" class="badge bg-secondary me-2">Stations: Not Loaded</span>
+
+  <label class="btn btn-outline-success btn-sm me-1" for="xlsxInput">Import Timestep Log</label>
+  <input type="file" id="xlsxInput" accept=".xlsx, .xls" style="display:none;">
+  <span id="xlsxStatus" class="badge bg-secondary me-2">Log: Not Loaded</span>
+</div>
+
+<div id="map"></div>
+
+<!-- Animation Modal Popup -->
+<div class="modal fade" id="stationModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header align-items-center">
+        <div>
+          <h5 class="modal-title mb-0" id="modalStationTitle">Station Status</h5>
+        </div>
+        <!-- Prominent Simulation Time Banner -->
+        <div class="text-end">
+          <span class="badge bg-dark fs-6 font-monospace" id="modalClockDisplay">00:00:00</span>
+        </div>
+        <button type="button" class="btn-close ms-2" data-bs-dismiss="modal" aria-label="Close" id="closeModalBtn"></button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Controls Bar -->
+        <div class="bg-light p-2 rounded mb-3 border">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <button id="btnPlay" class="btn btn-primary btn-sm">Play</button>
+            <input type="range" class="form-range flex-grow-1" id="timeSlider" min="0" max="0" value="0">
+            <span id="stepDisplay" class="badge bg-secondary">0 / 0</span>
+          </div>
+          <div class="d-flex align-items-center justify-content-between text-muted small">
+            <span>Speed:</span>
+            <div>
+              <button class="btn btn-sm btn-outline-secondary py-0 speed-btn" data-speed="1000">1x</button>
+              <button class="btn btn-sm btn-outline-secondary py-0 speed-btn active" data-speed="500">2x</button>
+              <button class="btn btn-sm btn-outline-secondary py-0 speed-btn" data-speed="200">5x</button>
+              <button class="btn btn-sm btn-outline-secondary py-0 speed-btn" data-speed="50">20x</button>
+              <button class="btn btn-sm btn-outline-secondary py-0 speed-btn" data-speed="5">200x</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Swap Posts Layout -->
+        <h6>Battery Swap Posts</h6>
+        <div id="postsContainer" class="row g-2 mb-3"></div>
+
+        <!-- Queue Section -->
+        <h6>Queueing Vehicles (<span id="queueCount">0</span>)</h6>
+        <div id="queueContainer" class="queue-box"></div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/ol@7.5.2/dist/ol.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// ---------- Map & Layers Setup ----------
+const rasterLayer = new ol.layer.Tile({ source: new ol.source.OSM() });
+
+const vectorSource = new ol.source.Vector();
+const vectorLayer = new ol.layer.Vector({
+  source: vectorSource,
+  style: new ol.style.Style({
+    stroke: new ol.style.Stroke({ color: 'red', width: 2 }),
+    fill: new ol.style.Fill({ color: 'rgba(255,0,0,0.1)' })
+  })
+});
+
+const facilitySource = new ol.source.Vector();
+const facilityLayer = new ol.layer.Vector({
+  source: facilitySource,
+  style: new ol.style.Style({
+    image: new ol.style.Circle({
+      radius: 8,
+      fill: new ol.style.Fill({ color: '#0d6efd' }),
+      stroke: new ol.style.Stroke({ color: 'white', width: 2 })
+    })
+  })
+});
+
+const map = new ol.Map({
+  target: 'map',
+  layers: [rasterLayer, vectorLayer, facilityLayer],
+  view: new ol.View({
+    center: ol.proj.fromLonLat([0, 0]),
+    zoom: 2
+  })
+});
+
+// ---------- Data Stores & Global State ----------
+let excelDataByStation = {};
+let activeStationRecords = [];
+let processedRecordsWithPosts = [];
+let currentStepIdx = 0;
+let isPlaying = false;
+let playInterval = null;
+let playbackSpeed = 500;
+let activePostsCount = 2;
+
+let lastRenderedPostState = [];
+let lastRenderedQueueState = [];
+
+const stationModal = new bootstrap.Modal(document.getElementById('stationModal'));
+
+// ---------- Auto-Loading Logic ----------
+async function autoLoadData() {
+  try {
+    const scenarioResp = await fetch('../scenario.json');
+    if (!scenarioResp.ok) throw new Error('Could not fetch ../scenario.json');
+    const scenarioData = await scenarioResp.json();
+    const folderName = scenarioData.folder_name;
+
+    if (!folderName) throw new Error('folder_name not found in scenario.json');
+
+    const areaPath = `../${folderName}/geojson_files/area.geojson`;
+    const stationsPath = `../${folderName}/geojson_files/swap_stations.geojson`;
+    const xlsxPath = `../${folderName}/output/swap_station_timesteps.xlsx`;
+
+    // 1. Load Area GeoJSON
+    try {
+      const res = await fetch(areaPath);
+      if (res.ok) {
+        const geojson = await res.json();
+        loadAreaGeoJSON(geojson);
+      } else {
+        document.getElementById('areaStatus').className = 'badge bg-danger me-2';
+        document.getElementById('areaStatus').textContent = 'Area: File Not Found';
+      }
+    } catch(err) { console.error("Error loading area:", err); }
+
+    // 2. Load Swap Stations GeoJSON
+    try {
+      const res = await fetch(stationsPath);
+      if (res.ok) {
+        const geojson = await res.json();
+        loadFacilityGeoJSON(geojson);
+      } else {
+        document.getElementById('stationsStatus').className = 'badge bg-danger me-2';
+        document.getElementById('stationsStatus').textContent = 'Stations: File Not Found';
+      }
+    } catch(err) { console.error("Error loading stations:", err); }
+
+    // 3. Load Timestep Log XLSX
+    try {
+      const res = await fetch(xlsxPath);
+      if (res.ok) {
+        const buffer = await res.arrayBuffer();
+        parseAndStoreXLSX(buffer);
+      } else {
+        document.getElementById('xlsxStatus').className = 'badge bg-danger me-2';
+        document.getElementById('xlsxStatus').textContent = 'Log: File Not Found';
+      }
+    } catch(err) { console.error("Error loading xlsx:", err); }
+
+  } catch (err) {
+    console.warn("Auto-load skipped/failed:", err.message);
+  }
+}
+
+// Helper Functions for Data Processing
+function loadAreaGeoJSON(geojson) {
+  const features = new ol.format.GeoJSON().readFeatures(geojson, { featureProjection: 'EPSG:3857' });
+  vectorSource.clear();
+  vectorSource.addFeatures(features);
+  if (features.length) map.getView().fit(vectorSource.getExtent(), { padding: [40, 40, 40, 40], duration: 600 });
+  const status = document.getElementById('areaStatus');
+  status.textContent = 'Area: Loaded';
+  status.className = 'badge bg-success me-2';
+}
+
+function loadFacilityGeoJSON(geojson) {
+  let features = new ol.format.GeoJSON().readFeatures(geojson, { featureProjection: 'EPSG:3857' });
+  features = features.filter(f => f.getGeometry().getType() === 'Point');
+  facilitySource.clear();
+  facilitySource.addFeatures(features);
+  if (features.length && !vectorSource.getFeatures().length) {
+    map.getView().fit(facilitySource.getExtent(), { padding: [40, 40, 40, 40], duration: 600 });
+  }
+  const status = document.getElementById('stationsStatus');
+  status.textContent = 'Stations: Loaded';
+  status.className = 'badge bg-success me-2';
+}
+
+function parseAndStoreXLSX(arrayBuffer) {
+  const data = new Uint8Array(arrayBuffer);
+  const workbook = XLSX.read(data, { type: 'array' });
+  const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(worksheet);
+
+  excelDataByStation = {};
+  rows.forEach(row => {
+    const sId = row.station_id;
+    if (!excelDataByStation[sId]) excelDataByStation[sId] = [];
+
+    const swapIds = row.swapping_agent_ids ? String(row.swapping_agent_ids).split(',').map(s => s.trim()).filter(Boolean) : [];
+    const queueIds = row.queueing_agent_ids ? String(row.queueing_agent_ids).split(',').map(s => s.trim()).filter(Boolean) : [];
+
+    excelDataByStation[sId].push({
+      step: row.sim_step_sec,
+      time: row.timestamp,
+      swapping: swapIds,
+      queueing: queueIds
+    });
+  });
+
+  for (let sId in excelDataByStation) {
+    excelDataByStation[sId].sort((a, b) => a.step - b.step);
+  }
+
+  const statusBadge = document.getElementById('xlsxStatus');
+  statusBadge.textContent = `Log Loaded (${rows.length} steps)`;
+  statusBadge.className = 'badge bg-success me-2';
+}
+
+// ---------- Time Formatting Helper ----------
+function formatTime(isoStr, stepSec) {
+  if (isoStr) {
+    const d = new Date(isoStr);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+    }
+  }
+  if (stepSec != null) {
+    const hrs = Math.floor(stepSec / 3600);
+    const mins = Math.floor((stepSec % 3600) / 60);
+    const secs = stepSec % 60;
+    return [hrs, mins, secs].map(v => String(v).padStart(2, '0')).join(':');
+  }
+  return '--:--:--';
+}
+
+// ---------- Persistent Post Assignment ----------
+function processStationPosts(rawRecords, postsCount) {
+  const processed = [];
+  let postSlots = new Array(postsCount).fill(null);
+
+  rawRecords.forEach(rec => {
+    const currentSwappingSet = new Set(rec.swapping);
+
+    for (let i = 0; i < postsCount; i++) {
+      if (postSlots[i] !== null && !currentSwappingSet.has(postSlots[i])) {
+        postSlots[i] = null;
+      }
+    }
+
+    rec.swapping.forEach(agentId => {
+      if (!postSlots.includes(agentId)) {
+        const emptySlotIdx = postSlots.indexOf(null);
+        if (emptySlotIdx !== -1) {
+          postSlots[emptySlotIdx] = agentId;
+        }
+      }
+    });
+
+    processed.push({
+      step: rec.step,
+      time: rec.time,
+      posts: [...postSlots],
+      queueing: rec.queueing
+    });
+  });
+
+  return processed;
+}
+
+// ---------- Hover Tooltip ----------
+const hoverOverlay = new ol.Overlay({
+  element: document.createElement('div'),
+  offset: [10, 0],
+  positioning: 'center-left'
+});
+hoverOverlay.getElement().style.cssText = `
+  background: rgba(0,0,0,0.8);
+  color: white;
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 12px;
+  pointer-events: none;
+`;
+map.addOverlay(hoverOverlay);
+
+map.on('pointermove', function(evt) {
+  const pixel = map.getEventPixel(evt.originalEvent);
+  const hit = map.hasFeatureAtPixel(pixel, { layerFilter: l => l === facilityLayer });
+  if (!hit) {
+    hoverOverlay.setPosition(undefined);
+    return;
+  }
+
+  map.forEachFeatureAtPixel(pixel, function(feature, layer) {
+    if(layer !== facilityLayer) return;
+    const props = feature.getProperties();
+    const stationId = props.facility_id ?? props.id ?? props.station_id ?? 'Unknown';
+    const posts = props.posts ?? 2;
+
+    hoverOverlay.getElement().textContent = `Station ID: ${stationId} (${posts} Posts)`;
+    hoverOverlay.setPosition(feature.getGeometry().getCoordinates());
+  }, { layerFilter: l => l === facilityLayer });
+});
+
+// ---------- Manual File Inputs (Fallback) ----------
+document.getElementById('fileInput').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      loadAreaGeoJSON(JSON.parse(ev.target.result));
+      e.target.value = null;
+    } catch (err) { alert("Invalid Area GeoJSON"); }
+  };
+  reader.readAsText(file);
+});
+
+document.getElementById('facilityInput').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      loadFacilityGeoJSON(JSON.parse(ev.target.result));
+      e.target.value = null;
+    } catch (err) { alert("Invalid Facility GeoJSON"); }
+  };
+  reader.readAsText(file);
+});
+
+document.getElementById('xlsxInput').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      parseAndStoreXLSX(ev.target.result);
+      e.target.value = null;
+    } catch (err) { alert("Error parsing Excel file."); }
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+// ---------- Station Click & Modal Handler ----------
+const selectFacility = new ol.interaction.Select({ layers: [facilityLayer] });
+map.addInteraction(selectFacility);
+
+selectFacility.on('select', e => {
+  if (!e.selected.length) return;
+  const feature = e.selected[0];
+  selectFacility.getFeatures().clear();
+
+  const props = feature.getProperties();
+  const stationId = props.facility_id ?? props.id ?? props.station_id;
+  activePostsCount = parseInt(props.posts ?? 2, 10);
+
+  if (stationId == null) {
+    alert("This facility point does not have a station ID property.");
+    return;
+  }
+
+  activeStationRecords = excelDataByStation[stationId] || [];
+
+  if (!activeStationRecords.length) {
+    alert(`No simulation records found in Excel for Station ID: ${stationId}.`);
+    return;
+  }
+
+  processedRecordsWithPosts = processStationPosts(activeStationRecords, activePostsCount);
+  openAnimationModal(stationId, activePostsCount);
+});
+
+function openAnimationModal(stationId, postsCount) {
+  document.getElementById('modalStationTitle').textContent = `Swap Station ${stationId} (${postsCount} Posts)`;
+  
+  const slider = document.getElementById('timeSlider');
+  slider.min = 0;
+  slider.max = processedRecordsWithPosts.length - 1;
+  slider.value = 0;
+  currentStepIdx = 0;
+
+  lastRenderedPostState = [];
+  lastRenderedQueueState = [];
+
+  buildInitialPostDOM(postsCount);
+  stopAnimation();
+  renderStep();
+  stationModal.show();
+}
+
+function buildInitialPostDOM(postsCount) {
+  const postsContainer = document.getElementById('postsContainer');
+  postsContainer.innerHTML = '';
+  for (let i = 0; i < postsCount; i++) {
+    const col = document.createElement('div');
+    col.className = `col-${postsCount <= 3 ? (12 / postsCount) : 4}`;
+    col.innerHTML = `
+      <div class="post-box" id="postBox_${i}">
+        <span class="fw-bold text-secondary mb-1">Post #${i + 1}</span>
+        <div id="postContent_${i}"><span class="text-muted small">Available</span></div>
+      </div>
+    `;
+    postsContainer.appendChild(col);
+  }
+}
+
+function renderStep() {
+  const record = processedRecordsWithPosts[currentStepIdx];
+  if (!record) return;
+
+  document.getElementById('modalClockDisplay').textContent = formatTime(record.time, record.step);
+  
+  document.getElementById('stepDisplay').textContent = `${currentStepIdx + 1} / ${processedRecordsWithPosts.length}`;
+  document.getElementById('timeSlider').value = currentStepIdx;
+
+  record.posts.forEach((agentId, i) => {
+    if (lastRenderedPostState[i] !== agentId) {
+      const box = document.getElementById(`postBox_${i}`);
+      const content = document.getElementById(`postContent_${i}`);
+
+      if (agentId !== null) {
+        box.classList.add('occupied');
+        content.innerHTML = `<span class="badge bg-success vehicle-badge">Agent #${agentId}</span>`;
+      } else {
+        box.classList.remove('occupied');
+        content.innerHTML = `<span class="text-muted small">Available</span>`;
+      }
+      lastRenderedPostState[i] = agentId;
+    }
+  });
+
+  const currentQueueStr = record.queueing.join(',');
+  const lastQueueStr = lastRenderedQueueState.join(',');
+
+  if (currentQueueStr !== lastQueueStr) {
+    const queueContainer = document.getElementById('queueContainer');
+    const queueCountEl = document.getElementById('queueCount');
+    queueContainer.innerHTML = '';
+    queueCountEl.textContent = record.queueing.length;
+
+    if (record.queueing.length === 0) {
+      queueContainer.innerHTML = `<span class="text-muted small w-100 text-center align-self-center">Queue is empty</span>`;
+    } else {
+      record.queueing.forEach(agentId => {
+        const badge = document.createElement('span');
+        badge.className = 'badge bg-warning text-dark vehicle-badge';
+        badge.textContent = `Agent #${agentId}`;
+        queueContainer.appendChild(badge);
+      });
+    }
+    lastRenderedQueueState = [...record.queueing];
+  }
+}
+
+// ---------- Playback Controls ----------
+const btnPlay = document.getElementById('btnPlay');
+const slider = document.getElementById('timeSlider');
+
+function startAnimation() {
+  isPlaying = true;
+  btnPlay.textContent = 'Pause';
+  btnPlay.className = 'btn btn-warning btn-sm';
+  
+  playInterval = setInterval(() => {
+    if (currentStepIdx < processedRecordsWithPosts.length - 1) {
+      currentStepIdx++;
+      renderStep();
+    } else {
+      stopAnimation();
+    }
+  }, playbackSpeed);
+}
+
+function stopAnimation() {
+  isPlaying = false;
+  btnPlay.textContent = 'Play';
+  btnPlay.className = 'btn btn-primary btn-sm';
+  if (playInterval) clearInterval(playInterval);
+}
+
+btnPlay.addEventListener('click', () => {
+  if (isPlaying) stopAnimation();
+  else startAnimation();
+});
+
+slider.addEventListener('input', (e) => {
+  currentStepIdx = parseInt(e.target.value, 10);
+  renderStep();
+});
+
+document.querySelectorAll('.speed-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    playbackSpeed = parseInt(e.target.dataset.speed, 10);
+    if (isPlaying) {
+      stopAnimation();
+      startAnimation();
+    }
+  });
+});
+
+document.getElementById('closeModalBtn').addEventListener('click', stopAnimation);
+document.getElementById('stationModal').addEventListener('hidden.bs.modal', stopAnimation);
+
+// ---------- Trigger Auto-Load on Startup ----------
+window.addEventListener('DOMContentLoaded', autoLoadData);
+</script>
+
+</body>
+</html>
